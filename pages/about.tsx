@@ -31,13 +31,13 @@ export default function About() {
             </div>
             <div className="text-center mb-8">
               <h2 className="text-3xl font-serif font-bold text-neutral-800 mb-2">
-                Hi, I'm Lixi!
+                Hi, I&apos;m Lixi!
               </h2>
             </div>
 
             <div className="space-y-6 text-neutral-700 leading-relaxed">
               <p>
-                Welcome to my personal cooking journal! I'm passionate about creating 
+                Welcome to my personal cooking journal! I&apos;m passionate about creating 
                 delicious meals and sharing my culinary adventures with you.
               </p>
 

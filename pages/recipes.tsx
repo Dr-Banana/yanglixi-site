@@ -10,7 +10,7 @@ interface RecipesProps {
 export default function Recipes({ posts }: RecipesProps) {
   const [filter, setFilter] = useState<string>('all');
   
-  const categories = ['all', ...new Set(posts.map(p => p.category).filter(Boolean))];
+  const categories = ['all', ...Array.from(new Set(posts.map(p => p.category).filter(Boolean)))];
   
   const filteredPosts = filter === 'all' 
     ? posts 
@@ -37,14 +37,14 @@ export default function Recipes({ posts }: RecipesProps) {
               {categories.map((category) => (
                 <button
                   key={category}
-                  onClick={() => setFilter(category)}
+                  onClick={() => setFilter(category || 'all')}
                   className={`px-6 py-2 rounded-full font-medium transition-all ${
                     filter === category
                       ? 'bg-primary-500 text-white shadow-md'
                       : 'bg-white text-neutral-700 hover:bg-neutral-100'
                   }`}
                 >
-                  {category.charAt(0).toUpperCase() + category.slice(1)}
+                  {category ? category.charAt(0).toUpperCase() + category.slice(1) : 'All'}
                 </button>
               ))}
             </div>
