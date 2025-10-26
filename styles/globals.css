@@ -1,29 +1,106 @@
-@import 'tailwindcss';
-@plugin '@tailwindcss/typography';
-
-@theme static {
-  --color-primary: var(--theme-primary);
-  --color-gradient-1: var(--theme-gradient-1);
-  --color-gradient-2: var(--theme-gradient-2);
-  --color-gradient-3: var(--theme-gradient-3);
-  --color-gradient-4: var(--theme-gradient-4);
-  --font-primary: var(--theme-headings);
-  --font-secondary: var(--theme-body);
-}
-
-@custom-variant dark (&:where(.dark, .dark *));
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 @layer base {
-  h1,
-  h2,
-  h3,
-  h4,
-  h5,
-  h6 {
-    font-family: var(--font-primary);
-  }
-
   body {
-    font-family: var(--font-secondary);
+    @apply bg-neutral-50 text-neutral-900;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-serif;
   }
 }
+
+@layer components {
+  /* Recipe Card Styles */
+  .recipe-card {
+    @apply bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1;
+  }
+  
+  .recipe-card-image {
+    @apply w-full h-64 object-cover;
+  }
+  
+  /* Blog Content Styles */
+  .blog-content {
+    @apply prose prose-lg max-w-none;
+  }
+  
+  .blog-content h2 {
+    @apply text-3xl font-serif text-neutral-800 mt-12 mb-6 border-b-2 border-primary-200 pb-2;
+  }
+  
+  .blog-content h3 {
+    @apply text-2xl font-serif text-neutral-700 mt-8 mb-4;
+  }
+  
+  .blog-content p {
+    @apply text-neutral-700 leading-relaxed mb-6;
+  }
+  
+  .blog-content ul, .blog-content ol {
+    @apply my-6 space-y-2;
+  }
+  
+  .blog-content li {
+    @apply text-neutral-700;
+  }
+  
+  .blog-content img {
+    @apply rounded-lg shadow-lg my-8;
+  }
+  
+  .blog-content blockquote {
+    @apply border-l-4 border-primary-400 pl-6 italic my-8 text-neutral-600;
+  }
+  
+  /* Button Styles */
+  .btn-primary {
+    @apply bg-primary-500 text-white px-6 py-3 rounded-lg font-medium hover:bg-primary-600 transition-colors duration-200 shadow-sm hover:shadow-md;
+  }
+  
+  .btn-secondary {
+    @apply bg-sage-500 text-white px-6 py-3 rounded-lg font-medium hover:bg-sage-600 transition-colors duration-200 shadow-sm hover:shadow-md;
+  }
+}
+
+/* Custom Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.5s ease-out;
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+

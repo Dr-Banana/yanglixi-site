@@ -1,0 +1,5 @@
+# This folder will contain your recipe images
+# You can either:
+# 1. Store images here locally, or
+# 2. Use Cloudflare R2 for cloud storage (recommended)
+

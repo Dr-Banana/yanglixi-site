@@ -1,147 +1,225 @@
-![Netlify Next.js Blog Template designed by Bejamas](https://user-images.githubusercontent.com/43764894/223762618-62742b4e-9424-44a7-8e85-9f7e4e19db54.png)
+# Lixi's Kitchen - Cooking Blog
 
+A modern, beautiful cooking blog built with Next.js, featuring recipe posts stored locally and images hosted on Cloudflare R2.
 
-[![Deploy to Netlify Button](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/netlify-templates/nextjs-blog-theme)
+## Features
 
+✨ **Modern Design**
+- Beautiful, responsive UI with a cooking/food theme
+- Smooth animations and transitions
+- Mobile-friendly navigation
 
-A customizable blog starter using:
+🍳 **Recipe Management**
+- MDX support for rich recipe content
+- Local blog folder for storing recipe posts
+- Recipe metadata (cook time, difficulty, servings, etc.)
+- Category and tag filtering
 
-- [Next.js](https://github.com/vercel/next.js) v15 (Pages Router)
-- [Tailwind](https://tailwindcss.com/) v4.x
-- [Netlify Visual Editor](https://docs.netlify.com/visual-editor/overview/)
-- Built-in [MDX](https://mdxjs.com/) support
-- Includes modern design with dark & light themes
+📸 **Image Storage**
+- Cloudflare R2 integration for image hosting
+- Optimized image loading with Next.js Image component
+- Support for cover images and in-content images
 
-![Preview of blog theme. Author named Jay Doe and blog's name is "Next.js Blog Theme" with one blog post](nextjs-blog-theme-preview.png)
+🎨 **Beautiful Components**
+- Recipe cards with hover effects
+- Responsive header and footer
+- Custom styled blog content
+- Smooth page transitions
 
-[Take a gander at the demo.](https://bejamas-nextjs-blog.netlify.app)
+## Tech Stack
 
-[Click here to watch the template walkthrough!](https://www.youtube.com/watch?v=63QZHs259dY)
-
-## Table of Contents:
-
-- [Getting Started](#getting-started)
-  - [Setting Up Locally](#setting-up-locally)
-  - [Using the Wizard](#using-the-setup-wizard)
-- [Configuring the Blog](#configuring-the-blog)
-- [Adding New Posts](#adding-new-posts)
-- [Netlify Visual Editor](#netlify-visual-editor)
-- [Testing](#testing)
-  - [Included Default Testing](#included-default-testing)
-  - [Removing Renovate](#removing-renovate)
+- **Framework**: Next.js 14 (React)
+- **Styling**: Tailwind CSS
+- **Content**: MDX (Markdown + JSX)
+- **Image Storage**: Cloudflare R2
+- **Language**: TypeScript
 
 ## Getting Started
 
----
+### Prerequisites
 
-You can get started with this project in two ways: locally or using the [setup wizard](https://nextjs-wizard.netlify.app/).
+- Node.js 18+ installed
+- A Cloudflare account with R2 bucket set up (optional for images)
 
-### Setting Up Locally
+### Installation
 
-If you're doing it locally, start with clicking the [use this template](https://github.com/netlify-templates/nextjs-blog-theme/generate) button on GitHub. This will create a new repository with this template's files on your GitHub account. Once that is done, clone your new repository and navigate to it in your terminal.
-
-From there, you can install the project's dependencies by running:
-
-```shell
-yarn install
+1. Clone this repository:
+```bash
+git clone <your-repo-url>
+cd yanglixi-site
 ```
 
-Finally, you can run your project locally with:
-
-```shell
-yarn run dev
+2. Install dependencies:
+```bash
+npm install
 ```
 
-Open your browser and visit <http://localhost:3000>, your project should be running!
+3. Set up environment variables:
 
-### Using the Setup Wizard
+Create a `.env.local` file in the root directory:
 
-![Preview of Setup Wizard showing the initial page of a setup form](nextjs-setup-wizard.png)
+```env
+# Cloudflare R2 Configuration
+R2_ENDPOINT=https://your-account-id.r2.cloudflarestorage.com
+R2_ACCESS_KEY_ID=your-access-key-id
+R2_SECRET_ACCESS_KEY=your-secret-access-key
+R2_BUCKET_NAME=your-bucket-name
 
-Through the [setup wizard](https://nextjs-wizard.netlify.app/), you can create your blog in a few clicks and deploy to Netlify.
+# Public URL for R2 bucket
+NEXT_PUBLIC_R2_PUBLIC_URL=https://your-custom-domain.com
+```
 
-## Configuring the blog
-
-The config is based on environment variables to make it easy to integrate with any Jamstack platform, like Netlify.
-
-Here are the variables you can edit:
-| Variable | Description | Options
-| --- | --- | --- |
-| `BLOG_NAME` | the name of your blog, displayed below the avatar ||
-| `BLOG_TITLE` | the main header (`h1`) on the home page ||
-| `BLOG_FOOTER_TEXT`| the text in the footer ||
-| `BLOG_THEME` | the theme to pass to Tailwind | default |
-| `BLOG_FONT_HEADINGS` | the font-family for all HTML headings, from `h1` to `h6`| sans-serif (default), serif, monospace|
-| `BLOG_FONT_PARAGRAPHS` | the font-family for all other HTML elements | sans-serif (default), serif, monospace|
-
-All of the env variables can be configured through the [Wizard](https://nextjs-wizard.netlify.app/) or through setting the project's environment variables. You can do this in your Netlify dashaboard (Site settings/Build & deploy/Environment/Environment variables).
-
-https://user-images.githubusercontent.com/3611928/153997545-6dcdeef0-e570-49e7-93d6-ce0d393d16c9.mp4
-
-[alt: video walkthrough of editing env vars]
-
-If setting an environment variable isn't your cup of tea, the defaults can be changed in [`utils/global-data.js`](/utils/global-data.js). You can also remove the variables and hard code blog information where these variables are used in the code base.
-
-- `BLOG_THEME, BLOG_FONT_HEADINGS, & BLOG_FONT_PARAGRAPHS` are used in [`tailwind-preset.js`](tailwind-preset.js)
-- `BLOG_NAME, BLOG_TITLE, BLOG_FOOTER_TEXT` are used in [`pages/index.js`](pages/index.js) & [`pages/posts/[slug].js`](pages/posts/[slug].js) through the `globalData` object.
-
-## Adding new posts
-
-All posts are stored in `/posts` directory. To make a new post, create a new file with the [`.mdx` extension](https://mdxjs.com/).
-
-Since the posts are written in `MDX` format you can pass props and components. That means you can use [React components](https://reactjs.org/docs/components-and-props.html) inside your posts to make them more interactive. Learn more about how to do so in the [MDX docs on content](https://mdxjs.com/docs/using-mdx/#components).
-
-https://user-images.githubusercontent.com/3611928/152727802-102ec296-41c8-446d-93ed-922d11187073.mp4
-
-[alt: video walkthrough of adding a new blog post]
-
-## Netlify Visual Editor
-
-This template is configured to work with [visual editing](https://docs.netlify.com/visual-editor/overview/) and [Git Content Source](https://docs.netlify.com/create/content-sources/git/).
-
-### Develop with Netlify Visual Editor Locally
-
-The typical development process is to begin by working locally. Clone this repository, then run `npm install` in its root directory.
-
-Run the Next.js development server:
-
-```txt
-cd nextjs-blog-theme
+4. Run the development server:
+```bash
 npm run dev
 ```
 
-Install the [Netlify Visual Editor CLI](https://www.npmjs.com/package/@stackbit/cli). Then open a new terminal window in the same project directory and run the Netlify visual editor dev server:
+5. Open [http://localhost:3000](http://localhost:3000) in your browser
 
-```txt
-npm install -g @stackbit/cli
-stackbit dev
+## Adding New Recipes
+
+### Creating a Recipe Post
+
+1. Create a new `.mdx` file in the `blog/` folder
+2. Add frontmatter metadata at the top:
+
+```mdx
+---
+title: "Your Recipe Title"
+date: "2024-01-15"
+excerpt: "A short description of your recipe"
+coverImage: "/images/your-image.jpg"
+cookTime: "30 mins"
+difficulty: "Easy"
+servings: "4 servings"
+category: "italian"
+tags: ["Italian", "Pasta", "Quick"]
+---
+
+## Your Recipe Content
+
+Write your recipe instructions here using Markdown!
 ```
 
-This outputs your own Netlify visual editor URL. Open this, register, or sign in, and you will be directed to Netlify's visual editor for your new project.
+### Frontmatter Fields
 
-![Next.js Dev + Visual Editor Dev](https://assets.stackbit.com/docs/next-dev-stackbit-dev.png)
+- `title` (required): Recipe title
+- `date` (required): Publication date in YYYY-MM-DD format
+- `excerpt` (required): Short description for recipe cards
+- `coverImage` (required): Path to cover image
+- `cookTime` (optional): Total cooking time
+- `difficulty` (optional): Easy/Medium/Hard
+- `servings` (optional): Number of servings
+- `category` (optional): Recipe category for filtering
+- `tags` (optional): Array of tags
 
-### Next Steps
+## Image Management
 
-Here are a few suggestions on what to do next if you're new to Netlify Visual Editor:
+### Using R2 for Images
 
-- Learn [Netlify visual editor overview](https://docs.netlify.com/visual-editor/visual-editing/)
-- Check [Netlify visual editor reference documentation](https://visual-editor-reference.netlify.com/)
+1. Upload images to your R2 bucket in the `images/` folder
+2. Reference them in your recipes using the path: `/images/your-image.jpg`
+3. The app will automatically use your R2 public URL
 
-## Testing
+### Using Local Images
 
-### Included Default Testing
+1. Place images in the `public/images/` folder
+2. Reference them the same way: `/images/your-image.jpg`
 
-We’ve included some tooling that helps us maintain these templates. This template currently uses:
+### Upload API
 
-- [Renovate](https://www.mend.io/free-developer-tools/renovate/) - to regularly update our dependencies
+The project includes an upload API endpoint at `/api/upload` for programmatic image uploads:
 
-If your team is not interested in this tooling, you can remove them with ease!
+```javascript
+// Example usage
+const formData = new FormData();
+formData.append('file', yourFile);
 
-### Removing Renovate
+const response = await fetch('/api/upload', {
+  method: 'POST',
+  body: formData
+});
+```
 
-In order to keep our project up-to-date with dependencies we use a tool called [Renovate](https://github.com/marketplace/renovate). If you’re not interested in this tooling, delete the `renovate.json` file and commit that onto your main branch.
+## Project Structure
+
+```
+yanglixi-site/
+├── blog/                   # Recipe posts (MDX files)
+├── components/            # React components
+│   ├── Header.tsx
+│   ├── Footer.tsx
+│   ├── Layout.tsx
+│   └── RecipeCard.tsx
+├── lib/                   # Utility functions
+│   ├── blog.ts           # Blog post management
+│   └── r2.ts             # R2 image handling
+├── pages/                 # Next.js pages
+│   ├── index.tsx         # Home page
+│   ├── recipes.tsx       # All recipes page
+│   ├── about.tsx         # About page
+│   ├── blog/[slug].tsx   # Individual recipe page
+│   └── api/              # API routes
+├── public/               # Static files
+│   └── images/          # Local images (if not using R2)
+├── styles/              # CSS styles
+│   └── globals.css      # Global styles with Tailwind
+└── next.config.js       # Next.js configuration
+```
+
+## Customization
+
+### Colors
+
+Edit the color scheme in `tailwind.config.js`:
+
+```javascript
+colors: {
+  primary: { /* Your primary colors */ },
+  sage: { /* Your accent colors */ },
+}
+```
+
+### Site Information
+
+Update site details in:
+- `components/Header.tsx` - Site name and logo
+- `components/Footer.tsx` - Footer content and links
+- `pages/about.tsx` - About page content
+
+## Deployment
+
+### Vercel (Recommended)
+
+1. Push your code to GitHub
+2. Import your repository in Vercel
+3. Add your environment variables
+4. Deploy!
+
+### Other Platforms
+
+This is a standard Next.js app and can be deployed to any platform that supports Node.js:
+- Netlify
+- AWS
+- DigitalOcean
+- Your own server
+
+## Build for Production
+
+```bash
+npm run build
+npm start
+```
+
+## License
+
+This project is open source and available for personal use.
 
 ## Support
 
-If you get stuck along the way, get help in our [support forums](https://answers.netlify.com/).
+For questions or issues, please open an issue on GitHub.
+
+---
+
+Made with 💚 and lots of delicious food!
+
