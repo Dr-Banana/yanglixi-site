@@ -69,7 +69,9 @@ export default function Footer() {
             </p>
             <div className="flex space-x-4">
               <a 
-                href="#" 
+                href="https://www.instagram.com/ciciyang_0102?igsh=NTc4MTIwNjQ2YQ==" 
+                target="_blank" 
+                rel="noopener noreferrer"
                 className="text-sage-200 hover:text-white transition-colors"
                 aria-label="Instagram"
               >
