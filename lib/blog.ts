@@ -4,6 +4,7 @@ import matter from 'gray-matter';
 import { v4 as uuidv4 } from 'uuid';
 import { getR2Client, buildPublicR2Url } from './r2';
 import { ListObjectsV2Command, GetObjectCommand } from '@aws-sdk/client-s3';
+import type { ListObjectsV2CommandOutput } from '@aws-sdk/client-s3';
 import type { Readable } from 'stream';
 
 const blogDirectory = path.join(process.cwd(), 'blog');
@@ -211,7 +212,7 @@ export async function getBlogPostsFromR2(options?: { page?: number; pageSize?: n
   let keys: string[] = [];
   let continuationToken: string | undefined = undefined;
   do {
-    const res = await client.send(new ListObjectsV2Command({
+    const res: ListObjectsV2CommandOutput = await client.send(new ListObjectsV2Command({
       Bucket: bucket,
       Prefix: prefix,
       ContinuationToken: continuationToken,
@@ -238,7 +239,7 @@ export async function getBlogPostsFromR2(options?: { page?: number; pageSize?: n
       coverImage = String(data.coverImage);
     } else {
       const imagesPrefix = `Blogs/${uuid}/images/`;
-      const list = await client.send(new ListObjectsV2Command({ Bucket: bucket, Prefix: imagesPrefix }));
+      const list: ListObjectsV2CommandOutput = await client.send(new ListObjectsV2Command({ Bucket: bucket, Prefix: imagesPrefix }));
       const imageKeys = (list.Contents || []).map(o => o.Key!).filter(k => /\.(png|jpe?g|webp|gif|avif)$/i.test(k));
       const coverCandidate = imageKeys.find(k => /\/cover\./i.test(k)) || imageKeys[0];
       if (coverCandidate) {
@@ -286,7 +287,7 @@ export async function getBlogPostBySlugFromR2(slug: string): Promise<BlogPost | 
       coverImage = String(data.coverImage);
     } else {
       const imagesPrefix = `Blogs/${slug}/images/`;
-      const list = await client.send(new ListObjectsV2Command({ Bucket: bucket, Prefix: imagesPrefix }));
+      const list: ListObjectsV2CommandOutput = await client.send(new ListObjectsV2Command({ Bucket: bucket, Prefix: imagesPrefix }));
       const imageKeys = (list.Contents || []).map(o => o.Key!).filter(k => /\.(png|jpe?g|webp|gif|avif)$/i.test(k));
       const coverCandidate = imageKeys.find(k => /\/cover\./i.test(k)) || imageKeys[0];
       if (coverCandidate) {
@@ -320,7 +321,7 @@ export async function getAllSlugsFromR2(): Promise<string[]> {
   const slugs: string[] = [];
   let continuationToken: string | undefined = undefined;
   do {
-    const res = await client.send(new ListObjectsV2Command({ Bucket: bucket, Prefix: prefix, ContinuationToken: continuationToken, MaxKeys: 1000 }));
+    const res: ListObjectsV2CommandOutput = await client.send(new ListObjectsV2Command({ Bucket: bucket, Prefix: prefix, ContinuationToken: continuationToken, MaxKeys: 1000 }));
     const batch = (res.Contents || [])
       .map(o => o.Key!)
       .filter(k => k.endsWith('/post.mdx'))
