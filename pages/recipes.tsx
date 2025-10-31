@@ -1,7 +1,8 @@
 import Layout from '@/components/Layout';
 import RecipeCard from '@/components/RecipeCard';
-import { getBlogPosts, BlogPost } from '@/lib/blog';
+import { getBlogPosts, BlogPost, getBlogPostsFromR2 } from '@/lib/blog';
 import { useState } from 'react';
+import type { GetServerSideProps } from 'next';
 
 interface RecipesProps {
   posts: BlogPost[];
@@ -83,20 +84,29 @@ export default function Recipes({ posts }: RecipesProps) {
   );
 }
 
-export async function getStaticProps() {
-  const posts = getBlogPosts().map(post => ({
-    ...post,
-    cookTime: post.cookTime || null,
-    difficulty: post.difficulty || null,
-    servings: post.servings || null,
-    category: post.category || null,
-    tags: post.tags || [],
-  }));
+export const getServerSideProps: GetServerSideProps = async () => {
+  let posts: BlogPost[] = [];
+  if (process.env.R2_BUCKET) {
+    const res = await getBlogPostsFromR2({ page: 1, pageSize: 1000 });
+    posts = res.posts.map(post => ({
+      ...post,
+      cookTime: post.cookTime || null,
+      difficulty: post.difficulty || null,
+      servings: post.servings || null,
+      category: post.category || null,
+      tags: post.tags || [],
+    }));
+  } else {
+    posts = getBlogPosts().map(post => ({
+      ...post,
+      cookTime: post.cookTime || null,
+      difficulty: post.difficulty || null,
+      servings: post.servings || null,
+      category: post.category || null,
+      tags: post.tags || [],
+    }));
+  }
 
-  return {
-    props: {
-      posts,
-    },
-  };
-}
+  return { props: { posts } };
+};
 
