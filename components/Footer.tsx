@@ -16,6 +16,9 @@ export default function Footer() {
               A personal cooking journal documenting my culinary adventures, 
               favorite recipes, and the joy of creating delicious meals.
             </p>
+            <div className="mt-2 text-xs">
+              <Link href="/admin/login" className="text-sage-300/70 hover:text-white">Admin</Link>
+            </div>
           </div>
 
           {/* Quick Links */}

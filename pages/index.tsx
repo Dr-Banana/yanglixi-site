@@ -168,7 +168,7 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
   let total = 0;
   let pageCount = 1;
   if (process.env.R2_BUCKET) {
-    const res = await getBlogPostsFromR2({ page, pageSize });
+    const res = await getBlogPostsFromR2({ page, pageSize, includeDrafts: false });
     posts = res.posts.map(post => ({
       ...post,
       cookTime: post.cookTime || null,

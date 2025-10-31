@@ -203,7 +203,7 @@ function getAllSlugsFromR2Sync(): string[] {
 }
 
 // 导出异步版本供 API 或 GSSP 使用
-export async function getBlogPostsFromR2(options?: { page?: number; pageSize?: number }): Promise<{ posts: BlogPost[]; total: number; page: number; pageSize: number; pageCount: number; }> {
+export async function getBlogPostsFromR2(options?: { page?: number; pageSize?: number; includeDrafts?: boolean }): Promise<{ posts: BlogPost[]; total: number; page: number; pageSize: number; pageCount: number; }> {
   const client = getR2Client();
   const bucket = process.env.R2_BUCKET!;
   const prefix = 'Blogs/';
@@ -245,6 +245,12 @@ export async function getBlogPostsFromR2(options?: { page?: number; pageSize?: n
       if (coverCandidate) {
         coverImage = buildPublicR2Url(coverCandidate);
       }
+    }
+
+    // Skip drafts unless includeDrafts
+    const published = Boolean(data.published);
+    if (!published && !options?.includeDrafts) {
+      continue;
     }
 
     posts.push({

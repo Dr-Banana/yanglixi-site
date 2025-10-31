@@ -87,7 +87,7 @@ export default function Recipes({ posts }: RecipesProps) {
 export const getServerSideProps: GetServerSideProps = async () => {
   let posts: BlogPost[] = [];
   if (process.env.R2_BUCKET) {
-    const res = await getBlogPostsFromR2({ page: 1, pageSize: 1000 });
+    const res = await getBlogPostsFromR2({ page: 1, pageSize: 1000, includeDrafts: false });
     posts = res.posts.map(post => ({
       ...post,
       cookTime: post.cookTime || null,
