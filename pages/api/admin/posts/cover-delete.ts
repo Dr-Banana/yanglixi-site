@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { getCookieName, verifySessionToken } from '@/lib/auth';
-import { getR2Client, buildPublicR2Url } from '@/lib/r2';
-import { PutObjectCommand } from '@aws-sdk/client-s3';
+import { getR2Client } from '@/lib/r2';
+import { DeleteObjectCommand } from '@aws-sdk/client-s3';
 
 function getTokenFromReq(req: NextApiRequest): string | null {
   const cookie = req.headers.cookie || '';
@@ -19,29 +19,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const session = token ? await verifySessionToken(token) : null;
   if (!session) return res.status(401).json({ message: 'Unauthorized' });
 
-  const { slug, dataUrl } = req.body || {};
-  if (!slug || !dataUrl || typeof dataUrl !== 'string') {
-    return res.status(400).json({ message: 'Missing slug or dataUrl' });
+  const { slug } = req.body || {};
+  if (!slug || typeof slug !== 'string') {
+    return res.status(400).json({ message: 'Missing slug' });
   }
-
-  // dataUrl: data:image/jpeg;base64,XXXX
-  const match = dataUrl.match(/^data:(.+);base64,(.*)$/);
-  if (!match) return res.status(400).json({ message: 'Invalid dataUrl' });
-  const contentType = match[1];
-  const base64 = match[2];
-  const buffer = Buffer.from(base64, 'base64');
 
   const client = getR2Client();
   const bucket = process.env.R2_BUCKET!;
   const key = `Blogs/${slug}/images/cover.jpg`;
 
-  await client.send(new PutObjectCommand({ Bucket: bucket, Key: key, Body: buffer, ContentType: contentType }));
-
-  const publicUrl = buildPublicR2Url(key);
-  if (!publicUrl) {
-    console.warn('R2_PUBLIC_HOST not configured, returning key only');
+  try {
+    await client.send(new DeleteObjectCommand({ Bucket: bucket, Key: key }));
+    return res.status(200).json({ ok: true });
+  } catch (error) {
+    console.error('Delete cover error:', error);
+    return res.status(500).json({ message: 'Failed to delete cover image' });
   }
-  return res.status(200).json({ ok: true, url: publicUrl, key });
 }
-
 

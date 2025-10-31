@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { getBlogPostBySlugFromR2 } from '@/lib/blog';
 import { MDXRemote, MDXRemoteSerializeResult } from 'next-mdx-remote';
+import { v4 as uuidv4 } from 'uuid';
 
 interface WriteProps {
   initial?: {
@@ -34,6 +35,7 @@ export default function WritePage({ initial }: WriteProps) {
   const [missing, setMissing] = useState<{title?: boolean; date?: boolean; body?: boolean}>({});
   const [coverUrl, setCoverUrl] = useState<string | null>(initial?.coverUrl || null);
   const [uploadingCover, setUploadingCover] = useState(false);
+  const [displaySlug, setDisplaySlug] = useState<string>(initial?.slug || slug || uuidv4());
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -41,7 +43,7 @@ export default function WritePage({ initial }: WriteProps) {
     setMessage(null);
     const form = new FormData(e.currentTarget);
     const payload = {
-      slug: (form.get('slug') as string) || undefined,
+      slug: displaySlug || undefined,
       title: String(form.get('title') || ''),
       date: String(form.get('date') || ''),
       excerpt: String(form.get('excerpt') || ''),
@@ -77,7 +79,10 @@ export default function WritePage({ initial }: WriteProps) {
       const data = await res.json();
       setMessage('Saved');
       alert('Saved successfully');
-      router.replace(`/admin/write?slug=${encodeURIComponent(data.slug)}`);
+      if (data.slug) {
+        setDisplaySlug(data.slug);
+      }
+      router.replace(`/admin/write?slug=${encodeURIComponent(data.slug || displaySlug)}`);
     } else {
       const data = await res.json().catch(() => ({}));
       setMessage(data?.message || 'Save failed');
@@ -119,26 +124,51 @@ export default function WritePage({ initial }: WriteProps) {
   async function onCoverSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-    const currentSlug = (document.querySelector('input[name="slug"]') as HTMLInputElement | null)?.value || initial?.slug || slug || '';
-    if (!currentSlug) {
-      alert('Please set slug first, then upload cover.');
+    
+    // Check file size (5MB limit)
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    if (file.size > maxSize) {
+      alert('File size too large. Please choose an image smaller than 5MB.');
+      e.target.value = '';
       return;
     }
-    const dataUrl = await fileToDataUrl(file);
-    setUploadingCover(true);
+    
+    // Check file type
+    if (!file.type.startsWith('image/')) {
+      alert('Please choose an image file.');
+      e.target.value = '';
+      return;
+    }
+    
+    const currentSlug = displaySlug;
+    if (!currentSlug) {
+      alert('Please set slug first, then upload cover.');
+      e.target.value = '';
+      return;
+    }
+    
     try {
+      const dataUrl = await fileToDataUrl(file);
+      setUploadingCover(true);
       const res = await fetch('/api/admin/posts/cover', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ slug: currentSlug, dataUrl }) });
       if (res.ok) {
-        // Recompute cover URL from env
-        const host = (process.env as any).NEXT_PUBLIC_R2_PUBLIC_HOST || (process.env as any).R2_PUBLIC_HOST || '';
-        const base = typeof host === 'string' ? host.replace(/\/$/, '') : '';
-        if (base) setCoverUrl(`${base}/Blogs/${currentSlug}/images/cover.jpg?ts=${Date.now()}`);
-        alert('Cover uploaded');
+        const data = await res.json();
+        if (data.url) {
+          setCoverUrl(`${data.url}?ts=${Date.now()}`);
+          alert('Cover uploaded successfully');
+        } else {
+          alert('Cover uploaded but R2_PUBLIC_HOST not configured. Image saved but may not be accessible.');
+        }
       } else {
-        alert('Upload failed');
+        const errorData = await res.json().catch(() => ({}));
+        alert(errorData?.message || 'Upload failed. Please try again.');
       }
+    } catch (error) {
+      console.error('Upload error:', error);
+      alert('Failed to upload image. Please check your connection and try again.');
     } finally {
       setUploadingCover(false);
+      e.target.value = '';
     }
   }
 
@@ -149,6 +179,32 @@ export default function WritePage({ initial }: WriteProps) {
       reader.onerror = reject;
       reader.readAsDataURL(file);
     });
+  }
+
+  async function onDeleteCover() {
+    if (!coverUrl || !displaySlug) return;
+    if (!confirm('Delete this cover image?')) return;
+    
+    setUploadingCover(true);
+    try {
+      const res = await fetch('/api/admin/posts/cover-delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ slug: displaySlug }),
+      });
+      if (res.ok) {
+        setCoverUrl(null);
+        alert('Cover image deleted');
+      } else {
+        const errorData = await res.json().catch(() => ({}));
+        alert(errorData?.message || 'Failed to delete cover image');
+      }
+    } catch (error) {
+      console.error('Delete cover error:', error);
+      alert('Failed to delete image. Please try again.');
+    } finally {
+      setUploadingCover(false);
+    }
   }
 
   return (
@@ -199,24 +255,49 @@ export default function WritePage({ initial }: WriteProps) {
             <input name="tags" defaultValue={(initial?.tags || []).join(', ')} className="w-full border rounded px-3 py-2" />
           </div>
           <div>
-            <label className="block text-sm text-neutral-600 mb-1">Slug (optional, defaults to UUID)</label>
-            <input name="slug" defaultValue={initial?.slug || slug || ''} className="w-full border rounded px-3 py-2" />
+            <label className="block text-sm text-neutral-600 mb-1">Slug (UUID)</label>
+            <input name="slug" value={displaySlug} disabled className="w-full border rounded px-3 py-2 bg-neutral-50 text-neutral-500 cursor-not-allowed" readOnly />
           </div>
           
           <div>
             <label className="block text-sm text-neutral-600 mb-2">Cover Image (cover.jpg)</label>
-            <div className="flex items-start gap-4">
-              <div className="w-40 h-28 bg-neutral-100 rounded overflow-hidden flex items-center justify-center border">
+            <div className="flex flex-col sm:flex-row items-start gap-4">
+              <div className="w-full sm:w-40 h-40 sm:h-28 bg-neutral-100 rounded overflow-hidden flex items-center justify-center border flex-shrink-0 relative">
                 {coverUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={coverUrl} alt="cover" className="w-full h-full object-cover" />
+                  <>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={coverUrl} alt="cover" className="w-full h-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={onDeleteCover}
+                      disabled={uploadingCover}
+                      className="absolute top-1 right-1 bg-red-600 text-white rounded-full p-1.5 hover:bg-red-700 disabled:opacity-50"
+                      title="Delete cover"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </>
                 ) : (
                   <span className="text-xs text-neutral-500">No cover</span>
                 )}
               </div>
-              <div>
-                <input type="file" accept="image/*" onChange={onCoverSelect} />
-                <div className="text-xs text-neutral-500 mt-1">Will be saved to images/cover.jpg</div>
+              <div className="flex-1 w-full">
+                <label className="block">
+                  <input 
+                    type="file" 
+                    accept="image/jpeg,image/png,image/webp" 
+                    onChange={onCoverSelect} 
+                    disabled={uploadingCover}
+                    className="hidden"
+                    id="cover-upload"
+                  />
+                  <span className={`inline-block px-4 py-2 rounded cursor-pointer text-sm ${uploadingCover ? 'bg-neutral-300 text-neutral-500 cursor-not-allowed' : 'bg-neutral-900 text-white hover:bg-neutral-800'}`}>
+                    {uploadingCover ? 'Uploading...' : 'Choose Image'}
+                  </span>
+                </label>
+                <div className="text-xs text-neutral-500 mt-1">Will be saved to images/cover.jpg (max 5MB). Optional.</div>
               </div>
             </div>
           </div>

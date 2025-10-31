@@ -1,4 +1,5 @@
 import { FormEvent, useState } from 'react';
+import Link from 'next/link';
 
 export default function AdminLogin() {
   const [error, setError] = useState<string | null>(null);
@@ -18,7 +19,7 @@ export default function AdminLogin() {
     });
     setLoading(false);
     if (res.ok) {
-      window.location.href = '/admin';
+      window.location.href = '/admin/posts';
     } else {
       const data = await res.json().catch(() => ({}));
       setError(data?.message || 'Login failed');
@@ -41,6 +42,11 @@ export default function AdminLogin() {
         <button disabled={loading} className="w-full bg-neutral-900 text-white rounded py-2 disabled:opacity-60">
           {loading ? 'Signing in...' : 'Sign in'}
         </button>
+        <div className="pt-2 text-center">
+          <Link href="/" className="text-sm text-neutral-600 hover:text-neutral-800">
+            ← Back to Home
+          </Link>
+        </div>
       </form>
     </div>
   );
