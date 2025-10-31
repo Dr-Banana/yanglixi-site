@@ -1,13 +1,18 @@
 import Layout from '@/components/Layout';
-import { getBlogPosts, BlogPost } from '@/lib/blog';
+import { BlogPost, getBlogPostsFromR2 } from '@/lib/blog';
 import Link from 'next/link';
 import { format } from 'date-fns';
+import type { GetServerSideProps } from 'next';
 
 interface BlogListProps {
   posts: BlogPost[];
+  page: number;
+  pageSize: number;
+  pageCount: number;
+  total: number;
 }
 
-export default function BlogList({ posts }: BlogListProps) {
+export default function BlogList({ posts, page, pageSize, pageCount, total }: BlogListProps) {
   return (
     <Layout title="Blog - Lixi's Kitchen">
       {/* Header Section */}
@@ -17,7 +22,7 @@ export default function BlogList({ posts }: BlogListProps) {
             Cooking Blog
           </h1>
           <p className="text-lg text-neutral-600">
-            Documenting delicious food, sharing life · {posts.length} {posts.length === 1 ? 'post' : 'posts'}
+            Documenting delicious food, sharing life · {total} {total === 1 ? 'post' : 'posts'}
           </p>
         </div>
       </div>
@@ -144,25 +149,67 @@ export default function BlogList({ posts }: BlogListProps) {
             ))}
           </div>
         )}
+        {/* Pagination */}
+        {pageCount > 1 && (
+          <div className="flex items-center justify-center gap-3 mt-10">
+            <Pagination page={page} pageCount={pageCount} />
+          </div>
+        )}
       </div>
     </Layout>
   );
 }
 
-export async function getStaticProps() {
-  const posts = getBlogPosts().map(post => ({
-    ...post,
-    cookTime: post.cookTime || null,
-    difficulty: post.difficulty || null,
-    servings: post.servings || null,
-    category: post.category || null,
-    tags: post.tags || [],
-  }));
+export const getServerSideProps: GetServerSideProps = async (ctx) => {
+  const page = Number(ctx.query.page || '1') || 1;
+  const pageSize = Number(ctx.query.pageSize || '10') || 10;
+
+  let posts: BlogPost[] = [];
+  let total = 0;
+  let pageCount = 1;
+  if (process.env.R2_BUCKET) {
+    const res = await getBlogPostsFromR2({ page, pageSize });
+    posts = res.posts.map(post => ({
+      ...post,
+      cookTime: post.cookTime || null,
+      difficulty: post.difficulty || null,
+      servings: post.servings || null,
+      category: post.category || null,
+      tags: post.tags || [],
+    }));
+    total = res.total;
+    pageCount = res.pageCount;
+  } else {
+    const { getBlogPosts } = await import('@/lib/blog');
+    const all = getBlogPosts();
+    total = all.length;
+    pageCount = Math.max(1, Math.ceil(total / pageSize));
+    const start = (page - 1) * pageSize;
+    posts = all.slice(start, start + pageSize);
+  }
 
   return {
-    props: {
-      posts,
-    },
+    props: { posts, page, pageSize, pageCount, total },
   };
+};
+
+function Pagination({ page, pageCount }: { page: number; pageCount: number }) {
+  const prev = page > 1 ? `/\?page=${page - 1}` : null;
+  const next = page < pageCount ? `/\?page=${page + 1}` : null;
+  return (
+    <div className="inline-flex items-center gap-2">
+      {prev ? (
+        <Link href={prev} className="px-3 py-1.5 rounded border border-neutral-200 hover:border-primary-300 hover:text-primary-700">Prev</Link>
+      ) : (
+        <span className="px-3 py-1.5 rounded border border-neutral-100 text-neutral-300">Prev</span>
+      )}
+      <span className="px-3 py-1.5 text-sm text-neutral-600">Page {page} / {pageCount}</span>
+      {next ? (
+        <Link href={next} className="px-3 py-1.5 rounded border border-neutral-200 hover:border-primary-300 hover:text-primary-700">Next</Link>
+      ) : (
+        <span className="px-3 py-1.5 rounded border border-neutral-100 text-neutral-300">Next</span>
+      )}
+    </div>
+  );
 }
 

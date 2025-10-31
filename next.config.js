@@ -6,8 +6,7 @@ const nextConfig = {
   images: {
     unoptimized: true
   },
-  output: 'export',
-  distDir: 'out'
+  // SSR 模式：移除 static export 配置
 }
 
 module.exports = nextConfig

@@ -1,9 +1,10 @@
 import Layout from '@/components/Layout';
-import { getBlogPostBySlug, getAllSlugs } from '@/lib/blog';
+import { getBlogPostBySlug, getBlogPostBySlugFromR2 } from '@/lib/blog';
 import { MDXRemote, MDXRemoteSerializeResult } from 'next-mdx-remote';
 import { serialize } from 'next-mdx-remote/serialize';
 import { format } from 'date-fns';
 import Link from 'next/link';
+import type { GetServerSideProps } from 'next';
 
 interface BlogPostProps {
   post: {
@@ -114,24 +115,14 @@ export default function BlogPost({ post, mdxSource }: BlogPostProps) {
   );
 }
 
-export async function getStaticPaths() {
-  const slugs = getAllSlugs();
-  
-  return {
-    paths: slugs.map((slug) => ({
-      params: { slug },
-    })),
-    fallback: false,
-  };
-}
+export const getServerSideProps: GetServerSideProps = async ({ params }) => {
+  const slug = (params as { slug: string }).slug;
+  const post = process.env.R2_BUCKET
+    ? await getBlogPostBySlugFromR2(slug)
+    : getBlogPostBySlug(slug);
 
-export async function getStaticProps({ params }: { params: { slug: string } }) {
-  const post = getBlogPostBySlug(params.slug);
-  
   if (!post) {
-    return {
-      notFound: true,
-    };
+    return { notFound: true };
   }
 
   const mdxSource = await serialize(post.content);
@@ -150,5 +141,5 @@ export async function getStaticProps({ params }: { params: { slug: string } }) {
       mdxSource,
     },
   };
-}
+};
 
