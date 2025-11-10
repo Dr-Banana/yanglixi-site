@@ -1,5 +1,6 @@
 import Layout from '@/components/Layout';
 import { BlogPost, getBlogPostsFromR2 } from '@/lib/blog';
+import { getCookieName, verifySessionToken } from '@/lib/auth';
 import Link from 'next/link';
 import { format } from 'date-fns';
 import type { GetServerSideProps } from 'next';
@@ -10,11 +11,12 @@ interface BlogListProps {
   pageSize: number;
   pageCount: number;
   total: number;
+  isAdmin: boolean;
 }
 
-export default function BlogList({ posts, page, pageSize, pageCount, total }: BlogListProps) {
+export default function BlogList({ posts, page, pageSize, pageCount, total, isAdmin }: BlogListProps) {
   return (
-    <Layout title="Blog - Lixi's Kitchen">
+    <Layout title="Blog - Lixi's Kitchen" isAdmin={isAdmin}>
       {/* Header Section */}
       <div className="bg-gradient-to-br from-primary-50 to-sage-50 py-8 border-b border-neutral-200">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -161,6 +163,12 @@ export default function BlogList({ posts, page, pageSize, pageCount, total }: Bl
 }
 
 export const getServerSideProps: GetServerSideProps = async (ctx) => {
+  // Check if admin session exists
+  const cookie = ctx.req.headers.cookie || '';
+  const token = cookie.split(';').map(s => s.trim()).find(s => s.startsWith(getCookieName() + '='))?.split('=')[1];
+  const session = token ? await verifySessionToken(token) : null;
+  const isAdmin = !!session;
+
   const page = Number(ctx.query.page || '1') || 1;
   const pageSize = Number(ctx.query.pageSize || '10') || 10;
 
@@ -189,7 +197,7 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
   }
 
   return {
-    props: { posts, page, pageSize, pageCount, total },
+    props: { posts, page, pageSize, pageCount, total, isAdmin },
   };
 };
 

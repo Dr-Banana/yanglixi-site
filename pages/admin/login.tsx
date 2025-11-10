@@ -19,7 +19,7 @@ export default function AdminLogin() {
     });
     setLoading(false);
     if (res.ok) {
-      window.location.href = '/admin/posts';
+      window.location.href = '/recipes';
     } else {
       const data = await res.json().catch(() => ({}));
       setError(data?.message || 'Login failed');

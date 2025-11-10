@@ -1,8 +1,14 @@
 import Layout from '@/components/Layout';
+import { getCookieName, verifySessionToken } from '@/lib/auth';
+import type { GetServerSideProps } from 'next';
 
-export default function Contact() {
+interface ContactProps {
+  isAdmin: boolean;
+}
+
+export default function Contact({ isAdmin }: ContactProps) {
   return (
-    <Layout title="Contact - Lixi's Kitchen">
+    <Layout title="Contact - Lixi's Kitchen" isAdmin={isAdmin}>
       {/* Hero Section */}
       <div className="relative bg-gradient-to-br from-primary-600 via-primary-700 to-sage-600 text-white overflow-hidden">
         <div className="absolute inset-0 bg-black opacity-20"></div>
@@ -262,3 +268,13 @@ export default function Contact() {
     </Layout>
   );
 }
+
+export const getServerSideProps: GetServerSideProps = async (ctx) => {
+  // Check if admin session exists
+  const cookie = ctx.req.headers.cookie || '';
+  const token = cookie.split(';').map(s => s.trim()).find(s => s.startsWith(getCookieName() + '='))?.split('=')[1];
+  const session = token ? await verifySessionToken(token) : null;
+  const isAdmin = !!session;
+
+  return { props: { isAdmin } };
+};

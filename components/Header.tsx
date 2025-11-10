@@ -1,7 +1,11 @@
 import Link from 'next/link';
 import { useState } from 'react';
 
-export default function Header() {
+interface HeaderProps {
+  isAdmin?: boolean;
+}
+
+export default function Header({ isAdmin = false }: HeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
@@ -49,6 +53,14 @@ export default function Header() {
             >
               Contact
             </Link>
+            {isAdmin && (
+              <button
+                onClick={() => { window.location.href = '/api/auth/logout'; }}
+                className="px-4 py-2 rounded-lg bg-neutral-900 text-white hover:bg-neutral-800 transition-colors font-medium text-sm"
+              >
+                Logout
+              </button>
+            )}
           </div>
 
           {/* Mobile menu button */}
@@ -106,6 +118,14 @@ export default function Header() {
               >
                 Contact
               </Link>
+              {isAdmin && (
+                <button
+                  onClick={() => { window.location.href = '/api/auth/logout'; }}
+                  className="text-left px-4 py-2 rounded-lg bg-neutral-900 text-white hover:bg-neutral-800 transition-colors font-medium text-sm mt-2"
+                >
+                  Logout
+                </button>
+              )}
             </div>
           </div>
         )}

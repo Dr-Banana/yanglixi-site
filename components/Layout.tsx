@@ -6,12 +6,14 @@ interface LayoutProps {
   children: React.ReactNode;
   title?: string;
   description?: string;
+  isAdmin?: boolean;
 }
 
 export default function Layout({ 
   children, 
   title = "Lixi's Kitchen - Cooking with Love",
-  description = "A personal cooking journal documenting culinary adventures and favorite recipes"
+  description = "A personal cooking journal documenting culinary adventures and favorite recipes",
+  isAdmin = false
 }: LayoutProps) {
   return (
     <>
@@ -23,7 +25,7 @@ export default function Layout({
       </Head>
 
       <div className="flex flex-col min-h-screen">
-        <Header />
+        <Header isAdmin={isAdmin} />
         <main className="flex-grow">
           {children}
         </main>

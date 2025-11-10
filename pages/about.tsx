@@ -1,9 +1,15 @@
 import Layout from '@/components/Layout';
+import { getCookieName, verifySessionToken } from '@/lib/auth';
 import Image from 'next/image';
+import type { GetServerSideProps } from 'next';
 
-export default function About() {
+interface AboutProps {
+  isAdmin: boolean;
+}
+
+export default function About({ isAdmin }: AboutProps) {
   return (
-    <Layout title="About - Lixi's Kitchen">
+    <Layout title="About - Lixi's Kitchen" isAdmin={isAdmin}>
       <div className="bg-gradient-to-br from-primary-50 to-sage-50 py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h1 className="text-5xl font-serif font-bold text-neutral-800 mb-4">
@@ -130,4 +136,14 @@ export default function About() {
     </Layout>
   );
 }
+
+export const getServerSideProps: GetServerSideProps = async (ctx) => {
+  // Check if admin session exists
+  const cookie = ctx.req.headers.cookie || '';
+  const token = cookie.split(';').map(s => s.trim()).find(s => s.startsWith(getCookieName() + '='))?.split('=')[1];
+  const session = token ? await verifySessionToken(token) : null;
+  const isAdmin = !!session;
+
+  return { props: { isAdmin } };
+};
 

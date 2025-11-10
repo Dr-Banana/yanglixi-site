@@ -9,6 +9,7 @@ interface RecipeCardProps {
   cookTime?: string | null;
   difficulty?: string | null;
   category?: string | null;
+  editMode?: boolean;
 }
 
 export default function RecipeCard({
@@ -19,9 +20,13 @@ export default function RecipeCard({
   cookTime,
   difficulty,
   category,
+  editMode = false,
 }: RecipeCardProps) {
+  // Always link to view page, edit button will be on the recipe detail page
+  const href = `/recipe/${slug}`;
+  
   return (
-    <Link href={`/blog/${slug}`} className="recipe-card group">
+    <Link href={href} className="recipe-card group">
       <div className="p-6">
         <div className="flex items-center gap-3 text-sm text-neutral-500 mb-3 flex-wrap">
           <time dateTime={date}>
