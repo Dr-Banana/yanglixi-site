@@ -104,3 +104,31 @@ html {
   background: #555;
 }
 
+/* Activity Carousel Styles */
+.activity-carousel .swiper {
+  overflow: hidden;
+}
+
+.activity-carousel .swiper-wrapper {
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+.activity-carousel .swiper-slide {
+  height: auto;
+}
+
+.activity-carousel .swiper-button-prev-custom,
+.activity-carousel .swiper-button-next-custom {
+  @apply opacity-0 transition-opacity duration-300;
+}
+
+.activity-carousel:hover .swiper-button-prev-custom,
+.activity-carousel:hover .swiper-button-next-custom {
+  @apply opacity-100;
+}
+
+.activity-card {
+  @apply h-full;
+}
+

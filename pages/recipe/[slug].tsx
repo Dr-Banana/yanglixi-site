@@ -34,7 +34,7 @@ export default function RecipePost({ recipe, mdxSource, isAdmin }: RecipePostPro
           <div className="flex items-center justify-between mb-8">
             <Link 
               href="/recipes" 
-              className="inline-flex items-center text-neutral-600 hover:text-primary-600 transition-colors font-medium text-sm"
+              className="inline-flex items-center px-4 py-2 rounded-lg border border-neutral-300 bg-white text-neutral-700 hover:bg-neutral-50 transition-colors font-medium text-sm"
             >
               <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -121,8 +121,14 @@ export default function RecipePost({ recipe, mdxSource, isAdmin }: RecipePostPro
           {/* Footer */}
           <footer className="mt-16 pt-8 border-t border-neutral-200">
             <div className="flex justify-center">
-              <Link href="/recipes" className="btn-primary">
-                ← Back to Recipes
+              <Link 
+                href="/recipes" 
+                className="inline-flex items-center px-4 py-2 rounded-lg border border-neutral-300 bg-white text-neutral-700 hover:bg-neutral-50 transition-colors font-medium text-sm"
+              >
+                <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+                Back to Recipes
               </Link>
             </div>
           </footer>

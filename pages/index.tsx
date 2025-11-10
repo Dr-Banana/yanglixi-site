@@ -1,12 +1,16 @@
 import Layout from '@/components/Layout';
+import ActivityCarousel, { ActivityItem } from '@/components/ActivityCarousel';
 import { BlogPost, getBlogPostsFromR2 } from '@/lib/blog';
+import { getActivitiesFromR2 } from '@/lib/activity';
 import { getCookieName, verifySessionToken } from '@/lib/auth';
 import Link from 'next/link';
+import Image from 'next/image';
 import { format } from 'date-fns';
 import type { GetServerSideProps } from 'next';
 
 interface BlogListProps {
   posts: BlogPost[];
+  activities: ActivityItem[];
   page: number;
   pageSize: number;
   pageCount: number;
@@ -14,23 +18,65 @@ interface BlogListProps {
   isAdmin: boolean;
 }
 
-export default function BlogList({ posts, page, pageSize, pageCount, total, isAdmin }: BlogListProps) {
+export default function BlogList({ posts, activities, page, pageSize, pageCount, total, isAdmin }: BlogListProps) {
   return (
     <Layout title="Blog - Lixi's Kitchen" isAdmin={isAdmin}>
       {/* Header Section */}
-      <div className="bg-gradient-to-br from-primary-50 to-sage-50 py-8 border-b border-neutral-200">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="bg-gradient-to-br from-primary-50 to-sage-50 py-12 border-b border-neutral-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h1 className="text-4xl md:text-5xl font-serif font-bold text-neutral-800 mb-2">
-            Cooking Blog
+            My Kitchen Diary
           </h1>
           <p className="text-lg text-neutral-600">
-            Documenting delicious food, sharing life · {total} {total === 1 ? 'post' : 'posts'}
+            Documenting delicious food, sharing life
           </p>
         </div>
       </div>
 
-      {/* Blog List */}
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      {/* My Activity Section */}
+      <div className="bg-white py-16 border-b border-neutral-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="mb-10 flex justify-between items-center">
+            <div>
+              <h2 className="text-3xl md:text-4xl font-serif font-bold text-neutral-800 mb-3">
+                My Activity
+              </h2>
+              <p className="text-neutral-600">
+                Recent food activities and daily moments
+              </p>
+            </div>
+            {isAdmin && (
+              <Link
+                href="/admin/activities"
+                className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors"
+              >
+                Manage Activities
+              </Link>
+            )}
+          </div>
+          {activities.length > 0 ? (
+            <ActivityCarousel items={activities} />
+          ) : (
+            <div className="text-center py-12 text-gray-500">
+              <p>No activities yet.</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Home Kitchen Section - Blog List */}
+      <div className="bg-gradient-to-b from-neutral-50 to-white py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="mb-10">
+            <h2 className="text-3xl md:text-4xl font-serif font-bold text-neutral-800 mb-3">
+              Home Kitchen
+            </h2>
+            <p className="text-neutral-600">
+              Home recipes and cooking tips · {total} {total === 1 ? 'post' : 'posts'}
+            </p>
+          </div>
+
+          <div className="max-w-5xl mx-auto">
         {posts.length === 0 ? (
           <div className="text-center py-20">
             <div className="text-6xl mb-4">📝</div>
@@ -52,12 +98,13 @@ export default function BlogList({ posts, page, pageSize, pageCount, total, isAd
                 <article className="bg-white rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 border border-neutral-100 hover:border-primary-200 overflow-hidden">
                   <div className="flex flex-col sm:flex-row">
                     {/* Cover Image - Left Side */}
-                    <div className="w-full sm:w-48 md:w-56 h-48 sm:h-auto flex-shrink-0">
+                    <div className="w-full sm:w-48 md:w-56 h-48 sm:h-auto flex-shrink-0 relative">
                       {post.coverImage ? (
-                        <img 
+                        <Image 
                           src={post.coverImage} 
                           alt={post.title}
-                          className="w-full h-full object-cover"
+                          fill
+                          className="object-cover"
                         />
                       ) : (
                         <div className="w-full h-full bg-gradient-to-br from-primary-100 to-sage-100 flex items-center justify-center">
@@ -151,12 +198,14 @@ export default function BlogList({ posts, page, pageSize, pageCount, total, isAd
             ))}
           </div>
         )}
-        {/* Pagination */}
-        {pageCount > 1 && (
-          <div className="flex items-center justify-center gap-3 mt-10">
-            <Pagination page={page} pageCount={pageCount} />
+            {/* Pagination */}
+            {pageCount > 1 && (
+              <div className="flex items-center justify-center gap-3 mt-10">
+                <Pagination page={page} pageCount={pageCount} />
+              </div>
+            )}
           </div>
-        )}
+        </div>
       </div>
     </Layout>
   );
@@ -196,8 +245,34 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
     posts = all.slice(start, start + pageSize);
   }
 
+  // Fetch activities from R2
+  let activities: ActivityItem[] = [];
+  if (process.env.R2_BUCKET) {
+    try {
+      // Public users only see published activities
+      // Admin users see all activities (for preview purposes)
+      const activitiesData = await getActivitiesFromR2({ includeDrafts: false });
+      // Map to ActivityItem format
+      const allActivities = activitiesData.map(a => ({
+        id: a.id,
+        title: a.title,
+        description: a.description,
+        image: a.image,
+        location: a.location || null, // Convert undefined to null for JSON serialization
+        link: a.link || null, // Convert undefined to null for JSON serialization
+      }));
+      
+      // Take only the first 5 activities (or all if less than 5)
+      activities = allActivities.slice(0, Math.min(5, allActivities.length));
+    } catch (error) {
+      console.error('Error fetching activities:', error);
+      // If error occurs, set to empty array (won't cause errors, will show empty state)
+      activities = [];
+    }
+  }
+
   return {
-    props: { posts, page, pageSize, pageCount, total, isAdmin },
+    props: { posts, activities, page, pageSize, pageCount, total, isAdmin },
   };
 };
 

@@ -95,7 +95,7 @@ export default function Recipes({ posts, isAdmin }: RecipesProps) {
               <div key={post.slug} className="relative">
                 {/* Draft Badge - Only visible to admin */}
                 {isAdmin && post.published === false && (
-                  <div className="absolute top-4 right-4 z-10 px-3 py-1 bg-yellow-500 text-white text-xs font-bold rounded-full shadow-md">
+                  <div className="absolute top-2 right-2 sm:top-4 sm:right-4 z-20 px-2.5 py-1 sm:px-3 bg-yellow-500 text-white text-xs font-bold rounded-full shadow-lg">
                     DRAFT
                   </div>
                 )}
@@ -104,6 +104,7 @@ export default function Recipes({ posts, isAdmin }: RecipesProps) {
                   title={post.title}
                   excerpt={post.excerpt}
                   date={post.date}
+                  coverImage={post.coverImage}
                   cookTime={post.cookTime}
                   difficulty={post.difficulty}
                   category={post.category}

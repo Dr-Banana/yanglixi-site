@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { format } from 'date-fns';
 
 interface RecipeCardProps {
@@ -6,6 +7,7 @@ interface RecipeCardProps {
   title: string;
   excerpt: string;
   date: string;
+  coverImage?: string | null;
   cookTime?: string | null;
   difficulty?: string | null;
   category?: string | null;
@@ -17,6 +19,7 @@ export default function RecipeCard({
   title,
   excerpt,
   date,
+  coverImage,
   cookTime,
   difficulty,
   category,
@@ -27,6 +30,28 @@ export default function RecipeCard({
   
   return (
     <Link href={href} className="recipe-card group">
+      {/* Cover Image */}
+      <div className="relative h-48 w-full overflow-hidden">
+        {coverImage ? (
+          <Image
+            src={coverImage}
+            alt={title}
+            fill
+            className="object-cover group-hover:scale-105 transition-transform duration-500"
+          />
+        ) : (
+          <div className="w-full h-full bg-gradient-to-br from-primary-100 to-sage-100 flex items-center justify-center">
+            <div className="text-center">
+              <svg className="w-16 h-16 mx-auto text-primary-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              <span className="text-xs text-primary-400 font-medium">No Image</span>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Content */}
       <div className="p-6">
         <div className="flex items-center gap-3 text-sm text-neutral-500 mb-3 flex-wrap">
           <time dateTime={date}>

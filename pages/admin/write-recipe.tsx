@@ -212,7 +212,15 @@ export default function WriteRecipePage({ initial }: WriteRecipeProps) {
       <div className="max-w-4xl mx-auto space-y-4">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold">{slug ? 'Edit Recipe' : 'New Recipe'}</h1>
-          <button onClick={() => router.push('/admin/recipes')} className="text-sm px-3 py-1.5 border rounded">Back to Recipes</button>
+          <button 
+            onClick={() => router.push('/admin/recipes')} 
+            className="inline-flex items-center px-4 py-2 rounded-lg border border-neutral-300 bg-white text-neutral-700 hover:bg-neutral-50 transition-colors font-medium text-sm"
+          >
+            <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+            Back to Recipes
+          </button>
         </div>
         {message && <div className="text-sm text-neutral-700">{message}</div>}
         <form onSubmit={onSubmit} className="bg-white rounded-xl shadow p-4 space-y-4">
