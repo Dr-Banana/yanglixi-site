@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
+import Link from 'next/link';
 import Layout from '@/components/Layout';
 import { Activity, getActivitiesFromR2 } from '@/lib/activity';
 import { getCookieName, verifySessionToken } from '@/lib/auth';
@@ -135,8 +136,20 @@ export default function ActivitiesPage({ activities: initialActivities, isAdmin 
   return (
     <Layout title="Manage Activities" isAdmin={isAdmin}>
       <div className="max-w-6xl mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold">Manage Activities</h1>
+        <div className="mb-8 flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold mb-2">Manage Activities</h1>
+            <p className="text-neutral-600">Carousel content on homepage</p>
+          </div>
+          <Link 
+            href="/"
+            className="inline-flex items-center px-4 py-2 rounded-lg border border-neutral-300 bg-white text-neutral-700 hover:bg-neutral-50 transition-colors font-medium text-sm"
+          >
+            <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+            Back to Home
+          </Link>
         </div>
 
         {/* Edit Modal */}

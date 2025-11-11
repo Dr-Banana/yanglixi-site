@@ -42,7 +42,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const client = getR2Client();
   const bucket = process.env.R2_BUCKET!;
-  const key = `Blogs/${slug}/images/cover.jpg`;
+  const key = `HomeKitchen/${slug}/images/cover.jpg`;
 
   await client.send(new PutObjectCommand({ Bucket: bucket, Key: key, Body: buffer, ContentType: contentType }));
 
@@ -52,5 +52,4 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
   return res.status(200).json({ ok: true, url: publicUrl, key });
 }
-
 

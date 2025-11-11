@@ -65,6 +65,23 @@ export default function AdminHome() {
               </Link>
             </div>
           </div>
+
+          {/* Home Kitchen Management */}
+          <div className="bg-white rounded-xl shadow p-6 hover:shadow-lg transition-shadow">
+            <div className="flex items-center gap-3 mb-4">
+              <svg className="w-8 h-8 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 22V12h6v10" />
+              </svg>
+              <h2 className="text-2xl font-serif font-bold">Home Kitchen</h2>
+            </div>
+            <p className="text-neutral-600 mb-6">Manage holiday feast posts, stored in HomeKitchen/ path</p>
+            <div className="flex gap-3">
+              <Link href="/admin/home-kitchen" className="px-4 py-2 rounded bg-neutral-900 text-white hover:bg-neutral-800 transition-colors">
+                Manage Posts
+              </Link>
+            </div>
+          </div>
         </div>
 
         <div className="mt-8 bg-blue-50 border border-blue-200 rounded-xl p-4">
@@ -92,8 +109,8 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
   if (!session) {
     return { redirect: { destination: '/admin/login', permanent: false } };
   }
-  // Redirect to recipes page
-  return { redirect: { destination: '/recipes', permanent: false } };
+  // Redirect to home page
+  return { redirect: { destination: '/', permanent: false } };
 };
 
 

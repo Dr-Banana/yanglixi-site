@@ -3,6 +3,15 @@ import { getCookieName, verifySessionToken } from '@/lib/auth';
 import { getR2Client, buildPublicR2Url } from '@/lib/r2';
 import { PutObjectCommand } from '@aws-sdk/client-s3';
 
+// Configure API route to accept larger payloads (for images)
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '10mb',
+    },
+  },
+};
+
 function getTokenFromReq(req: NextApiRequest): string | null {
   const cookie = req.headers.cookie || '';
   const token = cookie.split(';').map(s => s.trim()).find(s => s.startsWith(getCookieName() + '='))?.split('=')[1];
