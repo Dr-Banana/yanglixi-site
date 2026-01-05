@@ -51,10 +51,10 @@ export default function MarkdownPreviewEditor({
       .replace(/<h1.*?>(.*?)<\/h1>/g, '# $1\n')
       .replace(/<h2.*?>(.*?)<\/h2>/g, '## $1\n')
       .replace(/<h3.*?>(.*?)<\/h3>/g, '### $1\n')
-      .replace(/<ul.*?>(.*?)<\/ul>/gs, (match, p1) => {
+      .replace(/<ul.*?>([\s\S]*?)<\/ul>/g, (match, p1) => {
         return p1.replace(/<li.*?>(.*?)<\/li>/g, '- $1\n');
       })
-      .replace(/<ol.*?>(.*?)<\/ol>/gs, (match, p1) => {
+      .replace(/<ol.*?>([\s\S]*?)<\/ol>/g, (match, p1) => {
         let i = 1;
         return p1.replace(/<li>(.*?)<\/li>/g, () => `${i++}. $1\n`);
       })

@@ -26,7 +26,7 @@ interface HolidayPageProps {
 }
 
 export default function HolidayPage({ holiday, posts, isAdmin }: HolidayPageProps) {
-  const [filteredPosts, setFilteredPosts] = useState<HomeKitchenPost[]>(posts);
+  const [filteredPosts, setFilteredPosts] = useState<HomeKitchenPostWithMDX[]>(posts);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
 

@@ -22,7 +22,7 @@ interface HomeKitchenManageProps {
 
 export default function ManageHomeKitchen({ posts, isAdmin }: HomeKitchenManageProps) {
   const router = useRouter();
-  const [filteredPosts, setFilteredPosts] = useState<HomeKitchenPost[]>(posts);
+  const [filteredPosts, setFilteredPosts] = useState<HomeKitchenPostWithMDX[]>(posts);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
   const handleDelete = async (slug: string) => {
@@ -48,7 +48,7 @@ export default function ManageHomeKitchen({ posts, isAdmin }: HomeKitchenManageP
   };
 
   // Group posts by year
-  const grouped: { [year: string]: HomeKitchenPost[] } = {};
+  const grouped: { [year: string]: HomeKitchenPostWithMDX[] } = {};
   filteredPosts.forEach(post => {
     const year = new Date(post.date).getFullYear().toString();
     if (!grouped[year]) grouped[year] = [];

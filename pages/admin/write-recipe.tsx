@@ -6,6 +6,7 @@ import { useRouter } from 'next/router';
 import { getRecipeBySlugFromR2 } from '@/lib/recipe';
 import { MDXRemote, MDXRemoteSerializeResult } from 'next-mdx-remote';
 import { v4 as uuidv4 } from 'uuid';
+import { convertHeicToJpeg, fileToDataUrl } from '@/lib/imageUtils';
 
 interface WriteRecipeProps {
   initial?: {
@@ -180,14 +181,6 @@ export default function WriteRecipePage({ initial }: WriteRecipeProps) {
     }
   }
 
-  function fileToDataUrl(file: File): Promise<string> {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(String(reader.result));
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
-  }
 
   async function onDeleteCover() {
     if (!coverUrl || !displaySlug) return;
