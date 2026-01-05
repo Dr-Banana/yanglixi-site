@@ -1,5 +1,6 @@
 import type { GetServerSideProps } from 'next';
 import { getCookieName, verifySessionToken } from '@/lib/auth';
+import { ACCEPTED_IMAGE_FORMATS, isValidImageFile } from '@/lib/config';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { getRecipeBySlugFromR2 } from '@/lib/recipe';
@@ -136,10 +137,7 @@ export default function WriteRecipePage({ initial }: WriteRecipeProps) {
     }
     
     // Check file type (support HEIC/HEIF formats)
-    const isValidImageType = file.type.startsWith('image/') || 
-                             file.name.toLowerCase().endsWith('.heic') || 
-                             file.name.toLowerCase().endsWith('.heif');
-    if (!isValidImageType) {
+    if (!isValidImageFile(file)) {
       alert('Please choose an image file.');
       e.target.value = '';
       return;
@@ -300,7 +298,7 @@ export default function WriteRecipePage({ initial }: WriteRecipeProps) {
                 <label className="block">
                   <input 
                     type="file" 
-                    accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif" 
+                    accept={ACCEPTED_IMAGE_FORMATS} 
                     onChange={onCoverSelect} 
                     disabled={uploadingCover}
                     className="hidden"

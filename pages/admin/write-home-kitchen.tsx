@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import Image from 'next/image';
 import { holidays } from '@/components/HolidayGrid';
 import { getCookieName, verifySessionToken } from '@/lib/auth';
+import { ACCEPTED_IMAGE_FORMATS, isValidImageFile } from '@/lib/config';
 import type { GetServerSideProps } from 'next';
 
 export default function WriteHomeKitchen({ slug: initialSlug }: { slug?: string }) {
@@ -85,12 +86,7 @@ export default function WriteHomeKitchen({ slug: initialSlug }: { slug?: string 
     if (files.length === 0) return;
     
     // Check file types (support HEIC/HEIF formats)
-    const invalidFiles = files.filter(file => {
-      const isValidImageType = file.type.startsWith('image/') || 
-                               file.name.toLowerCase().endsWith('.heic') || 
-                               file.name.toLowerCase().endsWith('.heif');
-      return !isValidImageType;
-    });
+    const invalidFiles = files.filter(file => !isValidImageFile(file));
     
     if (invalidFiles.length > 0) {
       alert('Please choose image files only.');
@@ -228,7 +224,7 @@ export default function WriteHomeKitchen({ slug: initialSlug }: { slug?: string 
               </label>
               <input 
                 type="file" 
-                accept="image/*,image/heic,image/heif,.heic,.heif" 
+                accept={ACCEPTED_IMAGE_FORMATS} 
                 multiple
                 onChange={handleImageUpload}
                 className="w-full border border-neutral-300 rounded-lg px-4 py-2"

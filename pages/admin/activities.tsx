@@ -4,6 +4,7 @@ import Link from 'next/link';
 import Layout from '@/components/Layout';
 import { Activity, getActivitiesFromR2 } from '@/lib/activity';
 import { getCookieName, verifySessionToken } from '@/lib/auth';
+import { ACCEPTED_IMAGE_FORMATS, isValidImageFile } from '@/lib/config';
 import type { GetServerSideProps } from 'next';
 import Image from 'next/image';
 
@@ -55,6 +56,13 @@ export default function ActivitiesPage({ activities: initialActivities, isAdmin 
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    // Check file type (support HEIC/HEIF formats)
+    if (!isValidImageFile(file)) {
+      alert('Please choose an image file.');
+      e.target.value = '';
+      return;
+    }
 
     // Preview
     const reader = new FileReader();
@@ -220,7 +228,7 @@ export default function ActivitiesPage({ activities: initialActivities, isAdmin 
                   <label className="block text-sm font-medium mb-1">Image</label>
                   <input
                     type="file"
-                    accept="image/*"
+                    accept={ACCEPTED_IMAGE_FORMATS}
                     onChange={handleImageChange}
                     className="w-full border rounded px-3 py-2"
                   />
