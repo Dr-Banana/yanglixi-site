@@ -1,4 +1,4 @@
-import { useState, FormEvent } from 'react';
+import { useState, FormEvent, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import Image from 'next/image';
 import { holidays } from '@/components/HolidayGrid';
@@ -16,6 +16,51 @@ export default function EditHomeKitchen({ post: initialPost }: EditPageProps) {
   const [message, setMessage] = useState('');
   const [imagePreviews, setImagePreviews] = useState<string[]>(initialPost?.images || []);
   const [uploadedImages, setUploadedImages] = useState<string[]>(initialPost?.images || []);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
+  const initialImagesRef = useRef<string[]>(initialPost?.images || []);
+
+  // Track form changes
+  useEffect(() => {
+    const form = formRef.current;
+    if (!form) return;
+
+    const handleInputChange = () => {
+      setHasUnsavedChanges(true);
+    };
+
+    const inputs = form.querySelectorAll('input, textarea, select');
+    inputs.forEach(input => {
+      input.addEventListener('input', handleInputChange);
+      input.addEventListener('change', handleInputChange);
+    });
+
+    return () => {
+      inputs.forEach(input => {
+        input.removeEventListener('input', handleInputChange);
+        input.removeEventListener('change', handleInputChange);
+      });
+    };
+  }, []);
+
+  // Track image changes
+  useEffect(() => {
+    const imagesChanged = JSON.stringify(uploadedImages) !== JSON.stringify(initialImagesRef.current);
+    if (imagesChanged) {
+      setHasUnsavedChanges(true);
+    }
+  }, [uploadedImages]);
+
+  const handleBackClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (hasUnsavedChanges) {
+      if (window.confirm('You have unsaved changes. Are you sure you want to leave?')) {
+        router.back();
+      }
+    } else {
+      router.back();
+    }
+  };
 
   if (!initialPost) {
     return (
@@ -74,6 +119,8 @@ export default function EditHomeKitchen({ post: initialPost }: EditPageProps) {
       
       if (res.ok) {
         setMessage('Saved');
+        setHasUnsavedChanges(false);
+        initialImagesRef.current = uploadedImages;
         alert('Saved successfully');
       } else {
         const data = await res.json().catch(() => ({}));
@@ -126,6 +173,7 @@ export default function EditHomeKitchen({ post: initialPost }: EditPageProps) {
             if (res.ok) {
               const data = await res.json();
               setUploadedImages(prev => [...prev, data.url]);
+              setHasUnsavedChanges(true);
             } else {
               console.error('Failed to upload image');
             }
@@ -142,6 +190,7 @@ export default function EditHomeKitchen({ post: initialPost }: EditPageProps) {
   const removeImage = (index: number) => {
     setImagePreviews(prev => prev.filter((_, i) => i !== index));
     setUploadedImages(prev => prev.filter((_, i) => i !== index));
+    setHasUnsavedChanges(true);
   };
 
   return (
@@ -150,7 +199,7 @@ export default function EditHomeKitchen({ post: initialPost }: EditPageProps) {
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold">Edit Holiday Feast</h1>
           <button 
-            onClick={() => router.back()} 
+            onClick={handleBackClick}
             className="inline-flex items-center px-4 py-2 rounded-lg border border-neutral-300 bg-white text-neutral-700 hover:bg-neutral-50 transition-colors font-medium text-sm"
           >
             <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -161,7 +210,7 @@ export default function EditHomeKitchen({ post: initialPost }: EditPageProps) {
         </div>
         {message && <div className="text-sm text-neutral-700 bg-neutral-100 px-4 py-2 rounded-lg">{message}</div>}
         
-        <form onSubmit={onSubmit} className="bg-white rounded-xl shadow p-6 space-y-6">
+        <form ref={formRef} onSubmit={onSubmit} className="bg-white rounded-xl shadow p-6 space-y-6">
           <div className="space-y-6">
             <div>
               <label className="block text-sm font-medium text-neutral-700 mb-2">

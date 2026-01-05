@@ -1,4 +1,4 @@
-import { useState, FormEvent } from 'react';
+import { useState, FormEvent, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import Image from 'next/image';
 import { holidays } from '@/components/HolidayGrid';
@@ -14,11 +14,47 @@ export default function WriteHomeKitchen({ slug: initialSlug }: { slug?: string 
   const [message, setMessage] = useState('');
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
   
   // Pre-select holiday if coming from holiday page
   const preselectedHoliday = holidaySlug 
     ? holidays.find(h => h.slug === holidaySlug)?.name || ''
     : '';
+
+  // Track form changes
+  useEffect(() => {
+    const form = formRef.current;
+    if (!form) return;
+
+    const handleInputChange = () => {
+      setHasUnsavedChanges(true);
+    };
+
+    const inputs = form.querySelectorAll('input, textarea, select');
+    inputs.forEach(input => {
+      input.addEventListener('input', handleInputChange);
+      input.addEventListener('change', handleInputChange);
+    });
+
+    return () => {
+      inputs.forEach(input => {
+        input.removeEventListener('input', handleInputChange);
+        input.removeEventListener('change', handleInputChange);
+      });
+    };
+  }, []);
+
+  const handleBackClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (hasUnsavedChanges) {
+      if (window.confirm('You have unsaved changes. Are you sure you want to leave?')) {
+        router.back();
+      }
+    } else {
+      router.back();
+    }
+  };
 
   const onSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -33,13 +69,24 @@ export default function WriteHomeKitchen({ slug: initialSlug }: { slug?: string 
     const tags = (formData.get('tags') as string || '').split(',').map(t => t.trim()).filter(Boolean);
     const published = formData.get('published') === 'on';
     
-    if (!title.trim() || !holiday.trim() || !date.trim() || !description.trim()) {
-      setMessage('Title, Holiday, Date, and Description are required');
+    // Validation with specific warnings
+    const missingFields: string[] = [];
+    if (!title.trim()) missingFields.push('Title');
+    if (!holiday.trim()) missingFields.push('Holiday');
+    if (!date.trim()) missingFields.push('Date');
+    if (!description.trim()) missingFields.push('Description');
+    
+    if (missingFields.length > 0) {
+      const warningMessage = `Please fill in the following required fields: ${missingFields.join(', ')}`;
+      alert(warningMessage);
+      setMessage(warningMessage);
       return;
     }
     
     if (uploadedImages.length === 0) {
-      setMessage('Please upload at least one image');
+      const warningMessage = 'Please upload at least one image';
+      alert(warningMessage);
+      setMessage(warningMessage);
       return;
     }
     
@@ -66,6 +113,7 @@ export default function WriteHomeKitchen({ slug: initialSlug }: { slug?: string 
       
       if (res.ok) {
         setMessage('Saved');
+        setHasUnsavedChanges(false);
         alert('Saved successfully');
         if (!slug) {
           setSlug(newSlug);
@@ -127,6 +175,7 @@ export default function WriteHomeKitchen({ slug: initialSlug }: { slug?: string 
             if (res.ok) {
               const data = await res.json();
               setUploadedImages(prev => [...prev, data.url]);
+              setHasUnsavedChanges(true);
             } else {
               console.error('Failed to upload image');
             }
@@ -143,6 +192,7 @@ export default function WriteHomeKitchen({ slug: initialSlug }: { slug?: string 
   const removeImage = (index: number) => {
     setImagePreviews(prev => prev.filter((_, i) => i !== index));
     setUploadedImages(prev => prev.filter((_, i) => i !== index));
+    setHasUnsavedChanges(true);
   };
 
   return (
@@ -151,7 +201,7 @@ export default function WriteHomeKitchen({ slug: initialSlug }: { slug?: string 
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold">Share Holiday Feast</h1>
           <button 
-            onClick={() => router.back()} 
+            onClick={handleBackClick}
             className="inline-flex items-center px-4 py-2 rounded-lg border border-neutral-300 bg-white text-neutral-700 hover:bg-neutral-50 transition-colors font-medium text-sm"
           >
             <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -162,7 +212,7 @@ export default function WriteHomeKitchen({ slug: initialSlug }: { slug?: string 
         </div>
         {message && <div className="text-sm text-neutral-700 bg-neutral-100 px-4 py-2 rounded-lg">{message}</div>}
         
-        <form onSubmit={onSubmit} className="bg-white rounded-xl shadow p-6 space-y-6">
+        <form ref={formRef} onSubmit={onSubmit} className="bg-white rounded-xl shadow p-6 space-y-6">
           <div className="space-y-6">
             <div>
               <label className="block text-sm font-medium text-neutral-700 mb-2">
