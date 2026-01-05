@@ -1,6 +1,7 @@
 import type { GetServerSideProps } from 'next';
 import { getCookieName, verifySessionToken } from '@/lib/auth';
 import { ACCEPTED_IMAGE_FORMATS, isValidImageFile } from '@/lib/config';
+import { convertHeicToJpeg, fileToDataUrl } from '@/lib/imageUtils';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { getBlogPostBySlugFromR2 } from '@/lib/blog';
@@ -149,9 +150,14 @@ export default function WritePage({ initial }: WriteProps) {
     }
     
     try {
-      const dataUrl = await fileToDataUrl(file);
       setUploadingCover(true);
-      const res = await fetch('/api/admin/posts/cover', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ slug: currentSlug, dataUrl }) });
+      const processedFile = await convertHeicToJpeg(file);
+      const dataUrl = await fileToDataUrl(processedFile);
+      
+      // 强制确保是 JPEG
+      const jpegDataUrl = dataUrl.replace(/^data:.*;base64,/, 'data:image/jpeg;base64,');
+      
+      const res = await fetch('/api/admin/posts/cover', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ slug: currentSlug, dataUrl: jpegDataUrl }) });
       if (res.ok) {
         const data = await res.json();
         if (data.url) {
@@ -171,15 +177,6 @@ export default function WritePage({ initial }: WriteProps) {
       setUploadingCover(false);
       e.target.value = '';
     }
-  }
-
-  function fileToDataUrl(file: File): Promise<string> {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(String(reader.result));
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
   }
 
   async function onDeleteCover() {

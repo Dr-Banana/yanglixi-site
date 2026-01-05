@@ -151,9 +151,14 @@ export default function WriteRecipePage({ initial }: WriteRecipeProps) {
     }
     
     try {
-      const dataUrl = await fileToDataUrl(file);
       setUploadingCover(true);
-      const res = await fetch('/api/admin/recipes/cover', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ slug: currentSlug, dataUrl }) });
+      const processedFile = await convertHeicToJpeg(file);
+      const dataUrl = await fileToDataUrl(processedFile);
+      
+      // 强制确保是 JPEG
+      const jpegDataUrl = dataUrl.replace(/^data:.*;base64,/, 'data:image/jpeg;base64,');
+      
+      const res = await fetch('/api/admin/recipes/cover', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ slug: currentSlug, dataUrl: jpegDataUrl }) });
       if (res.ok) {
         const data = await res.json();
         if (data.url) {

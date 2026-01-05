@@ -1,11 +1,18 @@
 import { useState } from 'react';
 import Image from 'next/image';
+import HeicImage from '@/components/HeicImage';
 import Layout from '@/components/Layout';
 import { holidays } from '@/components/HolidayGrid';
 import { getHomeKitchenRecipesFromR2, HomeKitchenPost } from '@/lib/homeKitchen';
 import { getCookieName, verifySessionToken } from '@/lib/auth';
 import Link from 'next/link';
+import { MDXRemote, MDXRemoteSerializeResult } from 'next-mdx-remote';
+import { serialize } from 'next-mdx-remote/serialize';
 import type { GetServerSideProps } from 'next';
+
+interface HomeKitchenPostWithMDX extends HomeKitchenPost {
+  descriptionMdx?: MDXRemoteSerializeResult;
+}
 
 interface HolidayPageProps {
   holiday: {
@@ -14,7 +21,7 @@ interface HolidayPageProps {
     slug: string;
     color: string;
   };
-  posts: HomeKitchenPost[];
+  posts: HomeKitchenPostWithMDX[];
   isAdmin: boolean;
 }
 
@@ -237,7 +244,7 @@ export default function HolidayPage({ holiday, posts, isAdmin }: HolidayPageProp
                             'h-48'
                           } bg-neutral-100 cursor-pointer hover:opacity-90 transition-opacity`}
                         >
-                          <Image
+                          <HeicImage
                             src={img}
                             alt={`${post.title} - Photo ${idx + 1}`}
                             fill
@@ -257,9 +264,13 @@ export default function HolidayPage({ holiday, posts, isAdmin }: HolidayPageProp
 
                   {/* Post Content */}
                   <div className="p-6">
-                    <p className="text-neutral-700 leading-relaxed whitespace-pre-wrap">
-                      {post.description}
-                    </p>
+                    <div className="text-neutral-700 leading-relaxed prose prose-sm max-w-none">
+                      {post.descriptionMdx ? (
+                        <MDXRemote {...post.descriptionMdx} />
+                      ) : (
+                        <p className="whitespace-pre-wrap">{post.description}</p>
+                      )}
+                    </div>
 
                     {/* Tags */}
                     {post.tags && post.tags.length > 0 && (
@@ -301,7 +312,7 @@ export default function HolidayPage({ holiday, posts, isAdmin }: HolidayPageProp
             className="relative max-w-7xl max-h-[90vh] w-full h-full"
             onClick={(e) => e.stopPropagation()}
           >
-            <Image
+            <HeicImage
               src={selectedImage}
               alt="Full size"
               fill
@@ -340,6 +351,22 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
     posts = res.recipes;
   }
 
+  // Serialize description markdown for each post
+  const postsWithMDX = await Promise.all(
+    posts.map(async (post) => {
+      if (post.description) {
+        try {
+          const descriptionMdx = await serialize(post.description);
+          return { ...post, descriptionMdx };
+        } catch (error) {
+          console.error('Error serializing description for post:', post.slug, error);
+          return post;
+        }
+      }
+      return post;
+    })
+  );
+
   return {
     props: {
       holiday: {
@@ -348,7 +375,7 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
         slug: holiday.slug,
         color: holiday.color,
       },
-      posts,
+      posts: postsWithMDX,
       isAdmin,
     },
   };

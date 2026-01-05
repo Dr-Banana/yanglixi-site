@@ -83,12 +83,21 @@ export async function getHomeKitchenRecipesFromR2(options: {
           continue;
         }
 
-        // Build image URLs
+        // Build image URLs - Ensure all image paths are full URLs
         if (post.images && post.images.length > 0) {
           post.images = post.images.map((img, idx) => {
             if (img.startsWith('http')) return img;
-            const imgKey = `HomeKitchen/${post.slug}/images/image-${idx}.jpg`;
-            const publicUrl = buildPublicR2Url(imgKey);
+            
+            // Handle old data where only filename or index might be stored
+            if (!img.includes('/')) {
+              // Try common extensions if no extension is present
+              const filename = img.includes('.') ? img : `image-${idx}.jpg`;
+              const imgKey = `HomeKitchen/${post.slug}/images/${filename}`;
+              return buildPublicR2Url(imgKey) || img;
+            }
+            
+            // If it's a relative path/key, convert to full URL
+            const publicUrl = buildPublicR2Url(img);
             return publicUrl || img;
           });
         }
@@ -147,12 +156,20 @@ export async function getHomeKitchenRecipeBySlug(slug: string): Promise<HomeKitc
 
     const post: HomeKitchenPost = JSON.parse(body);
 
-    // Build image URLs
+    // Build image URLs - Ensure all image paths are full URLs
     if (post.images && post.images.length > 0) {
       post.images = post.images.map((img, idx) => {
         if (img.startsWith('http')) return img;
-        const imgKey = `HomeKitchen/${post.slug}/images/image-${idx}.jpg`;
-        const publicUrl = buildPublicR2Url(imgKey);
+        
+        // Handle old data where only filename or index might be stored
+        if (!img.includes('/')) {
+          const filename = img.includes('.') ? img : `image-${idx}.jpg`;
+          const imgKey = `HomeKitchen/${post.slug}/images/${filename}`;
+          return buildPublicR2Url(imgKey) || img;
+        }
+        
+        // If it's a relative path/key, convert to full URL
+        const publicUrl = buildPublicR2Url(img);
         return publicUrl || img;
       });
     }
@@ -205,14 +222,15 @@ export async function uploadHomeKitchenImage(
 
   try {
     const client = getR2Client();
-    const ext = contentType.split('/')[1] || 'jpg';
-    const key = `HomeKitchen/${slug}/images/image-${imageIndex}.${ext}`;
+    
+    // 强制使用 .jpg 后缀，因为我们在前端已经转换过了
+    const key = `HomeKitchen/${slug}/images/image-${imageIndex}.jpg`;
     
     const command = new PutObjectCommand({
       Bucket: R2_BUCKET,
       Key: key,
       Body: buffer,
-      ContentType: contentType,
+      ContentType: 'image/jpeg', // 强制指定内容类型
     });
     
     await client.send(command);

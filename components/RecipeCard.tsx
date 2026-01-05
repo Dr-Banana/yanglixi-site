@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
+import HeicImage from './HeicImage';
 import { format } from 'date-fns';
 
 interface RecipeCardProps {
@@ -33,7 +34,7 @@ export default function RecipeCard({
       {/* Cover Image */}
       <div className="relative h-48 w-full overflow-hidden">
         {coverImage ? (
-          <Image
+          <HeicImage
             src={coverImage}
             alt={title}
             fill

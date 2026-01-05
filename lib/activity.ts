@@ -187,15 +187,15 @@ export async function uploadActivityImageToR2(
   try {
     const client = getR2Client();
 
-    const ext = contentType.split('/')[1] || 'jpg';
-    const filename = `${activityId}.${ext}`;
+    // 强制使用 .jpg 后缀，因为我们在前端已经转换过了
+    const filename = `${activityId}.jpg`;
     const key = `activities/images/${filename}`;
     
     const command = new PutObjectCommand({
       Bucket: R2_BUCKET,
       Key: key,
       Body: buffer,
-      ContentType: contentType,
+      ContentType: 'image/jpeg',
     });
     
     await client.send(command);

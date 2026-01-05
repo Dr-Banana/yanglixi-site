@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { holidays } from '@/components/HolidayGrid';
 import { getCookieName, verifySessionToken } from '@/lib/auth';
 import { ACCEPTED_IMAGE_FORMATS, isValidImageFile } from '@/lib/config';
+import { convertHeicToJpeg, fileToDataUrl } from '@/lib/imageUtils';
 import type { GetServerSideProps } from 'next';
 
 export default function WriteHomeKitchen({ slug: initialSlug }: { slug?: string }) {
@@ -150,42 +151,44 @@ export default function WriteHomeKitchen({ slug: initialSlug }: { slug?: string 
     // Upload all files sequentially to avoid index conflicts
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
-      const reader = new FileReader();
       
-      await new Promise<void>((resolve) => {
-        reader.onloadend = async () => {
-          const dataUrl = reader.result as string;
-          
-          // Add preview immediately
-          setImagePreviews(prev => [...prev, dataUrl]);
-          
-          try {
-            // Use current index based on existing uploads
-            const currentIndex = uploadedImages.length + i;
-            const res = await fetch('/api/admin/home-kitchen/images', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ 
-                slug, 
-                imageIndex: currentIndex,
-                dataUrl 
-              }),
-            });
-            
-            if (res.ok) {
-              const data = await res.json();
-              setUploadedImages(prev => [...prev, data.url]);
-              setHasUnsavedChanges(true);
-            } else {
-              console.error('Failed to upload image');
-            }
-          } catch (error) {
-            console.error(error);
-          }
-          resolve();
-        };
-        reader.readAsDataURL(file);
-      });
+      try {
+        // 1. 转换 HEIC 到 JPEG (如果是 HEIC 的话)
+        const processedFile = await convertHeicToJpeg(file);
+        
+        // 2. 将文件转换为 Data URL
+        const dataUrl = await fileToDataUrl(processedFile);
+        
+        // 3. 核心修复：强制修改 Data URL 的 MIME 类型头为 image/jpeg
+        // 因为 heic2any 转换后的 Blob 有时会丢失或携带错误的 MIME 类型
+        const jpegDataUrl = dataUrl.replace(/^data:.*;base64,/, 'data:image/jpeg;base64,');
+        
+        // Add preview immediately
+        setImagePreviews(prev => [...prev, jpegDataUrl]);
+        
+        // Use current index based on existing uploads
+        const currentIndex = uploadedImages.length + i;
+        const res = await fetch('/api/admin/home-kitchen/images', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            slug, 
+            imageIndex: currentIndex,
+            dataUrl: jpegDataUrl // 这里发送的是 JPEG 数据
+          }),
+        });
+        
+        if (res.ok) {
+          const data = await res.json();
+          // 后端返回的 URL 应该是 .jpg 结尾的
+          setUploadedImages(prev => [...prev, data.url]);
+          setHasUnsavedChanges(true);
+        } else {
+          console.error('Failed to upload image');
+        }
+      } catch (error) {
+        console.error('Error processing or uploading image:', error);
+      }
     }
   };
 

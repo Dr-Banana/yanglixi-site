@@ -5,7 +5,9 @@ import { holidays } from '@/components/HolidayGrid';
 import { getHomeKitchenRecipeBySlug, HomeKitchenPost } from '@/lib/homeKitchen';
 import { getCookieName, verifySessionToken } from '@/lib/auth';
 import { ACCEPTED_IMAGE_FORMATS, isValidImageFile } from '@/lib/config';
+import { convertHeicToJpeg, fileToDataUrl } from '@/lib/imageUtils';
 import type { GetServerSideProps } from 'next';
+import MarkdownTextarea from '@/components/admin/components/MarkdownTextarea';
 
 interface EditPageProps {
   post: HomeKitchenPost | null;
@@ -17,6 +19,7 @@ export default function EditHomeKitchen({ post: initialPost }: EditPageProps) {
   const [imagePreviews, setImagePreviews] = useState<string[]>(initialPost?.images || []);
   const [uploadedImages, setUploadedImages] = useState<string[]>(initialPost?.images || []);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [description, setDescription] = useState(initialPost?.description || '');
   const formRef = useRef<HTMLFormElement>(null);
   const initialImagesRef = useRef<string[]>(initialPost?.images || []);
 
@@ -148,42 +151,43 @@ export default function EditHomeKitchen({ post: initialPost }: EditPageProps) {
     // Upload all files sequentially to avoid index conflicts
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
-      const reader = new FileReader();
       
-      await new Promise<void>((resolve) => {
-        reader.onloadend = async () => {
-          const dataUrl = reader.result as string;
-          
-          // Add preview immediately
-          setImagePreviews(prev => [...prev, dataUrl]);
-          
-          try {
-            // Use current index based on existing uploads
-            const currentIndex = uploadedImages.length + i;
-            const res = await fetch('/api/admin/home-kitchen/images', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ 
-                slug: initialPost.slug, 
-                imageIndex: currentIndex,
-                dataUrl 
-              }),
-            });
-            
-            if (res.ok) {
-              const data = await res.json();
-              setUploadedImages(prev => [...prev, data.url]);
-              setHasUnsavedChanges(true);
-            } else {
-              console.error('Failed to upload image');
-            }
-          } catch (error) {
-            console.error(error);
-          }
-          resolve();
-        };
-        reader.readAsDataURL(file);
-      });
+      try {
+        // 1. 转换 HEIC 到 JPEG (如果是 HEIC 的话)
+        const processedFile = await convertHeicToJpeg(file);
+        
+        // 2. 将文件转换为 Data URL
+        const dataUrl = await fileToDataUrl(processedFile);
+        
+        // 3. 核心修复：强制修改 Data URL 的 MIME 类型头为 image/jpeg
+        const jpegDataUrl = dataUrl.replace(/^data:.*;base64,/, 'data:image/jpeg;base64,');
+        
+        // Add preview immediately
+        setImagePreviews(prev => [...prev, jpegDataUrl]);
+        
+        // Use current index based on existing uploads
+        const currentIndex = uploadedImages.length + i;
+        const res = await fetch('/api/admin/home-kitchen/images', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            slug: initialPost.slug, 
+            imageIndex: currentIndex,
+            dataUrl: jpegDataUrl // 这里发送的是 JPEG 数据
+          }),
+        });
+        
+        if (res.ok) {
+          const data = await res.json();
+          // 后端返回的 URL 应该是 .jpg 结尾的
+          setUploadedImages(prev => [...prev, data.url]);
+          setHasUnsavedChanges(true);
+        } else {
+          console.error('Failed to upload image');
+        }
+      } catch (error) {
+        console.error('Error processing or uploading image:', error);
+      }
     }
   };
 
@@ -304,18 +308,18 @@ export default function EditHomeKitchen({ post: initialPost }: EditPageProps) {
               )}
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-2">
-                Description *
-              </label>
-              <textarea 
-                name="description" 
-                required 
-                rows={6}
-                defaultValue={initialPost.description}
-                className="w-full border border-neutral-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary-500 focus:border-transparent" 
-              />
-            </div>
+            <MarkdownTextarea
+              id="description-field-edit"
+              value={description}
+              onChange={(value) => {
+                setDescription(value);
+                setHasUnsavedChanges(true);
+              }}
+              label="Description *"
+              rows={6}
+              required
+            />
+            <input type="hidden" name="description" value={description} />
 
             <div>
               <label className="block text-sm font-medium text-neutral-700 mb-2">

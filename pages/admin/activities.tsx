@@ -5,6 +5,7 @@ import Layout from '@/components/Layout';
 import { Activity, getActivitiesFromR2 } from '@/lib/activity';
 import { getCookieName, verifySessionToken } from '@/lib/auth';
 import { ACCEPTED_IMAGE_FORMATS, isValidImageFile } from '@/lib/config';
+import { convertHeicToJpeg, fileToDataUrl } from '@/lib/imageUtils';
 import type { GetServerSideProps } from 'next';
 import Image from 'next/image';
 
@@ -64,28 +65,24 @@ export default function ActivitiesPage({ activities: initialActivities, isAdmin 
       return;
     }
 
-    // Preview
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setImagePreview(reader.result as string);
-    };
-    reader.readAsDataURL(file);
-
-    // Upload to server
     try {
-      const base64 = await new Promise<string>((resolve) => {
-        const r = new FileReader();
-        r.onloadend = () => resolve(r.result as string);
-        r.readAsDataURL(file);
-      });
+      // Process HEIC if needed
+      const processedFile = await convertHeicToJpeg(file);
+      const dataUrl = await fileToDataUrl(processedFile);
+      
+      // 强制确保是 JPEG 类型头
+      const jpegDataUrl = dataUrl.replace(/^data:.*;base64,/, 'data:image/jpeg;base64,');
+      
+      // Preview
+      setImagePreview(jpegDataUrl);
 
       const response = await fetch('/api/admin/activities/image', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           activityId: editing?.id,
-          image: base64,
-          contentType: file.type,
+          image: jpegDataUrl,
+          contentType: 'image/jpeg',
         }),
       });
 
@@ -94,7 +91,7 @@ export default function ActivitiesPage({ activities: initialActivities, isAdmin 
         setEditing({ ...editing, image: data.imageUrl });
       }
     } catch (error) {
-      console.error('Error uploading image:', error);
+      console.error('Error processing or uploading image:', error);
       alert('Failed to upload image');
     }
   };

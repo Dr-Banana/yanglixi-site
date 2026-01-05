@@ -1,15 +1,22 @@
 import { useState } from 'react';
 import { useRouter } from 'next/router';
 import Image from 'next/image';
+import HeicImage from '@/components/HeicImage';
 import Layout from '@/components/Layout';
 import { getHomeKitchenRecipesFromR2, HomeKitchenPost } from '@/lib/homeKitchen';
 import { getCookieName, verifySessionToken } from '@/lib/auth';
 import { holidays } from '@/components/HolidayGrid';
 import Link from 'next/link';
+import { MDXRemote, MDXRemoteSerializeResult } from 'next-mdx-remote';
+import { serialize } from 'next-mdx-remote/serialize';
 import type { GetServerSideProps } from 'next';
 
+interface HomeKitchenPostWithMDX extends HomeKitchenPost {
+  descriptionMdx?: MDXRemoteSerializeResult;
+}
+
 interface HomeKitchenManageProps {
-  posts: HomeKitchenPost[];
+  posts: HomeKitchenPostWithMDX[];
   isAdmin: boolean;
 }
 
@@ -144,7 +151,7 @@ export default function ManageHomeKitchen({ posts, isAdmin }: HomeKitchenManageP
                           <div className="relative w-full md:w-48 h-32 flex-shrink-0 rounded-lg overflow-hidden bg-neutral-100">
                             {post.images && post.images.length > 0 ? (
                               <>
-                                <Image 
+                                <HeicImage 
                                   src={post.images[0]} 
                                   alt={post.title} 
                                   fill 
@@ -247,9 +254,13 @@ export default function ManageHomeKitchen({ posts, isAdmin }: HomeKitchenManageP
                               </div>
                             </div>
 
-                            <p className="text-neutral-600 text-sm leading-relaxed line-clamp-2">
-                              {post.description}
-                            </p>
+                            <div className="text-neutral-600 text-sm leading-relaxed line-clamp-2 prose prose-sm max-w-none">
+                              {post.descriptionMdx ? (
+                                <MDXRemote {...post.descriptionMdx} />
+                              ) : (
+                                <p>{post.description}</p>
+                              )}
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -284,9 +295,25 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
     posts = res.recipes;
   }
 
+  // Serialize description markdown for each post
+  const postsWithMDX = await Promise.all(
+    posts.map(async (post) => {
+      if (post.description) {
+        try {
+          const descriptionMdx = await serialize(post.description);
+          return { ...post, descriptionMdx };
+        } catch (error) {
+          console.error('Error serializing description for post:', post.slug, error);
+          return post;
+        }
+      }
+      return post;
+    })
+  );
+
   return {
     props: {
-      posts,
+      posts: postsWithMDX,
       isAdmin,
     },
   };

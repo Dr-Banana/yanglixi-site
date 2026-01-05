@@ -1,6 +1,7 @@
 import type { GetServerSideProps } from 'next';
 import { getCookieName, verifySessionToken } from '@/lib/auth';
 import { ACCEPTED_IMAGE_FORMATS, isValidImageFile } from '@/lib/config';
+import { convertHeicToJpeg, fileToDataUrl } from '@/lib/imageUtils';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { getRecipeBySlugFromR2 } from '@/lib/recipe';
@@ -8,6 +9,7 @@ import { MDXRemote, MDXRemoteSerializeResult } from 'next-mdx-remote';
 import { v4 as uuidv4 } from 'uuid';
 import Layout from '@/components/Layout';
 import Link from 'next/link';
+import MarkdownTextarea from '@/components/admin/components/MarkdownTextarea';
 
 interface RecipeSections {
   introduction: string;
@@ -201,9 +203,14 @@ export default function EditRecipePage({ initial }: EditRecipeProps) {
     }
     
     try {
-      const dataUrl = await fileToDataUrl(file);
       setUploadingCover(true);
-      const res = await fetch('/api/admin/recipes/cover', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ slug: currentSlug, dataUrl }) });
+      const processedFile = await convertHeicToJpeg(file);
+      const dataUrl = await fileToDataUrl(processedFile);
+      
+      // 强制确保是 JPEG
+      const jpegDataUrl = dataUrl.replace(/^data:.*;base64,/, 'data:image/jpeg;base64,');
+      
+      const res = await fetch('/api/admin/recipes/cover', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ slug: currentSlug, dataUrl: jpegDataUrl }) });
       if (res.ok) {
         const data = await res.json();
         if (data.url) {
@@ -223,15 +230,6 @@ export default function EditRecipePage({ initial }: EditRecipeProps) {
       setUploadingCover(false);
       e.target.value = '';
     }
-  }
-
-  function fileToDataUrl(file: File): Promise<string> {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(String(reader.result));
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
   }
 
   async function onDeleteCover() {
@@ -447,29 +445,23 @@ export default function EditRecipePage({ initial }: EditRecipeProps) {
             <h3 className="text-xl font-semibold text-neutral-800">Recipe Content</h3>
             
             {/* Introduction */}
-            <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-2">
-                Introduction
-              </label>
-              <textarea 
-                value={sections.introduction}
-                onChange={(e) => setSections({...sections, introduction: e.target.value})}
-                rows={4}
-                className="w-full rounded-lg px-4 py-3 border border-neutral-300 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                placeholder="Describe the recipe, its origin, or why you love it... (optional)"
-              />
-            </div>
+            <MarkdownTextarea
+              id="section-introduction"
+              value={sections.introduction}
+              onChange={(value) => setSections({...sections, introduction: value})}
+              label="Introduction"
+              rows={4}
+              placeholder="Describe the recipe, its origin, or why you love it... (optional)"
+            />
 
             {/* Ingredients */}
             <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-2">
-                Ingredients
-              </label>
-              <textarea 
+              <MarkdownTextarea
+                id="section-ingredients"
                 value={sections.ingredients}
-                onChange={(e) => setSections({...sections, ingredients: e.target.value})}
+                onChange={(value) => setSections({...sections, ingredients: value})}
+                label="Ingredients"
                 rows={10}
-                className="w-full rounded-lg px-4 py-3 border border-neutral-300 focus:ring-2 focus:ring-primary-500 focus:border-transparent font-mono text-sm"
                 placeholder="- 2 cups flour&#10;- 1 cup sugar&#10;- 3 eggs&#10;... (optional)"
               />
               <p className="text-xs text-neutral-500 mt-1">Use bullet points (- ) or numbered lists (1. ) for ingredients</p>
@@ -477,46 +469,36 @@ export default function EditRecipePage({ initial }: EditRecipeProps) {
 
             {/* Instructions */}
             <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-2">
-                Instructions
-              </label>
-              <textarea 
+              <MarkdownTextarea
+                id="section-instructions"
                 value={sections.instructions}
-                onChange={(e) => setSections({...sections, instructions: e.target.value})}
+                onChange={(value) => setSections({...sections, instructions: value})}
+                label="Instructions"
                 rows={12}
-                className="w-full rounded-lg px-4 py-3 border border-neutral-300 focus:ring-2 focus:ring-primary-500 focus:border-transparent font-mono text-sm"
                 placeholder="1. Preheat oven to 350°F&#10;2. Mix dry ingredients...&#10;3. Bake for 30 minutes... (optional)"
               />
               <p className="text-xs text-neutral-500 mt-1">Number each step clearly (1. 2. 3. ...)</p>
             </div>
 
             {/* Storage */}
-            <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-2">
-                Storage
-              </label>
-              <textarea 
-                value={sections.storage}
-                onChange={(e) => setSections({...sections, storage: e.target.value})}
-                rows={3}
-                className="w-full rounded-lg px-4 py-3 border border-neutral-300 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                placeholder="Store in an airtight container for up to 3 days... (optional)"
-              />
-            </div>
+            <MarkdownTextarea
+              id="section-storage"
+              value={sections.storage}
+              onChange={(value) => setSections({...sections, storage: value})}
+              label="Storage"
+              rows={3}
+              placeholder="Store in an airtight container for up to 3 days... (optional)"
+            />
 
             {/* Serving Suggestions */}
-            <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-2">
-                Serving Suggestions
-              </label>
-              <textarea 
-                value={sections.servingSuggestions}
-                onChange={(e) => setSections({...sections, servingSuggestions: e.target.value})}
-                rows={3}
-                className="w-full rounded-lg px-4 py-3 border border-neutral-300 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                placeholder="Serve warm with ice cream, or enjoy with coffee... (optional)"
-              />
-            </div>
+            <MarkdownTextarea
+              id="section-serving-suggestions"
+              value={sections.servingSuggestions}
+              onChange={(value) => setSections({...sections, servingSuggestions: value})}
+              label="Serving Suggestions"
+              rows={3}
+              placeholder="Serve warm with ice cream, or enjoy with coffee... (optional)"
+            />
 
             {/* Preview */}
             <div className="mt-6">
