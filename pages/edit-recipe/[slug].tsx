@@ -82,13 +82,15 @@ export default function EditRecipePage({ initial }: EditRecipeProps) {
 
     if (publish) {
       const miss = {
-        title: !payload.title,
-        date: !payload.date,
-        body: !payload.body,
+        title: !payload.title.trim(),
+        date: !payload.date.trim(),
       };
       setMissing(miss);
-      if (miss.title || miss.date || miss.body) {
-        alert('Please fill required fields before publishing');
+      if (miss.title || miss.date) {
+        const missingFields = [];
+        if (miss.title) missingFields.push('Title');
+        if (miss.date) missingFields.push('Date');
+        alert(`Please fill required fields before publishing:\n- ${missingFields.join('\n- ')}`);
         setLoading(false);
         return;
       }
@@ -183,7 +185,11 @@ export default function EditRecipePage({ initial }: EditRecipeProps) {
       return;
     }
     
-    if (!file.type.startsWith('image/')) {
+    // Check file type (support HEIC/HEIF formats)
+    const isValidImageType = file.type.startsWith('image/') || 
+                             file.name.toLowerCase().endsWith('.heic') || 
+                             file.name.toLowerCase().endsWith('.heif');
+    if (!isValidImageType) {
       alert('Please choose an image file.');
       e.target.value = '';
       return;
@@ -423,7 +429,7 @@ export default function EditRecipePage({ initial }: EditRecipeProps) {
                 <label className="block">
                   <input 
                     type="file" 
-                    accept="image/jpeg,image/png,image/webp" 
+                    accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif" 
                     onChange={onCoverSelect} 
                     disabled={uploadingCover}
                     className="hidden"

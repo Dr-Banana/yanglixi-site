@@ -22,7 +22,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const bucket = process.env.R2_BUCKET!;
   const { slug, title, date, excerpt, cookTime, difficulty, servings, category, tags, body, published } = req.body || {};
   if (published) {
-    if (!title || !date || !body) return res.status(400).json({ message: 'Missing required fields' });
+    if (!title || !date) return res.status(400).json({ message: 'Missing required fields' });
   }
 
   const uuid = slug && String(slug).trim() ? String(slug).trim() : cryptoRandom();

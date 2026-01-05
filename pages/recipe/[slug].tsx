@@ -5,6 +5,8 @@ import { MDXRemote, MDXRemoteSerializeResult } from 'next-mdx-remote';
 import { serialize } from 'next-mdx-remote/serialize';
 import { format } from 'date-fns';
 import Link from 'next/link';
+import { useRouter } from 'next/router';
+import { useState } from 'react';
 import type { GetServerSideProps } from 'next';
 
 interface RecipePostProps {
@@ -25,6 +27,34 @@ interface RecipePostProps {
 const components = {};
 
 export default function RecipePost({ recipe, mdxSource, isAdmin }: RecipePostProps) {
+  const router = useRouter();
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/admin/recipes/delete?slug=${encodeURIComponent(recipe.slug)}`, {
+        method: 'POST',
+      });
+      
+      if (res.ok) {
+        // Redirect to recipes page on success
+        router.push('/recipes');
+      } else {
+        const data = await res.json().catch(() => ({}));
+        alert(data?.message || 'Delete failed');
+        setDeleting(false);
+        setShowDeleteModal(false);
+      }
+    } catch (error) {
+      console.error('Error deleting recipe:', error);
+      alert('Delete failed. Please try again later.');
+      setDeleting(false);
+      setShowDeleteModal(false);
+    }
+  };
+
   return (
     <Layout title={`${recipe.title} - Lixi's Kitchen`} description={recipe.title} isAdmin={isAdmin}>
       <article>
@@ -43,15 +73,26 @@ export default function RecipePost({ recipe, mdxSource, isAdmin }: RecipePostPro
             </Link>
             
             {isAdmin && (
-              <Link 
-                href={`/edit-recipe/${recipe.slug}`}
-                className="inline-flex items-center px-4 py-2 rounded-lg border border-neutral-300 bg-white text-neutral-700 hover:bg-neutral-50 transition-colors font-medium text-sm"
-              >
-                <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                </svg>
-                Edit Recipe
-              </Link>
+              <div className="flex items-center gap-2">
+                <Link 
+                  href={`/edit-recipe/${recipe.slug}`}
+                  className="inline-flex items-center px-4 py-2 rounded-lg border border-neutral-300 bg-white text-neutral-700 hover:bg-neutral-50 transition-colors font-medium text-sm"
+                >
+                  <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                  Edit Recipe
+                </Link>
+                <button
+                  onClick={() => setShowDeleteModal(true)}
+                  className="inline-flex items-center px-4 py-2 rounded-lg border border-red-300 bg-white text-red-700 hover:bg-red-50 transition-colors font-medium text-sm"
+                >
+                  <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                  Delete
+                </button>
+              </div>
             )}
           </div>
 
@@ -134,6 +175,34 @@ export default function RecipePost({ recipe, mdxSource, isAdmin }: RecipePostPro
           </footer>
         </div>
       </article>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-xl shadow-lg w-full max-w-md p-6">
+            <h2 className="text-lg font-semibold mb-2">Delete recipe?</h2>
+            <p className="text-sm text-neutral-600 mb-4">
+              This will permanently delete this recipe and its images. This action cannot be undone.
+            </p>
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                disabled={deleting}
+                className="px-4 py-2 rounded-lg border border-neutral-300 bg-white text-neutral-700 hover:bg-neutral-50 transition-colors font-medium text-sm disabled:opacity-60"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDelete}
+                disabled={deleting}
+                className="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors font-medium text-sm disabled:opacity-60"
+              >
+                {deleting ? 'Deleting…' : 'Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </Layout>
   );
 }

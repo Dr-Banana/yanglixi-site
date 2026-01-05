@@ -133,8 +133,11 @@ export default function WritePage({ initial }: WriteProps) {
       return;
     }
     
-    // Check file type
-    if (!file.type.startsWith('image/')) {
+    // Check file type (support HEIC/HEIF formats)
+    const isValidImageType = file.type.startsWith('image/') || 
+                             file.name.toLowerCase().endsWith('.heic') || 
+                             file.name.toLowerCase().endsWith('.heif');
+    if (!isValidImageType) {
       alert('Please choose an image file.');
       e.target.value = '';
       return;
@@ -287,7 +290,7 @@ export default function WritePage({ initial }: WriteProps) {
                 <label className="block">
                   <input 
                     type="file" 
-                    accept="image/jpeg,image/png,image/webp" 
+                    accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif" 
                     onChange={onCoverSelect} 
                     disabled={uploadingCover}
                     className="hidden"
