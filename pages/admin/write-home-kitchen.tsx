@@ -32,7 +32,7 @@ export default function WriteHomeKitchen({ slug: initialSlug }: { slug?: string 
     const tags = (formData.get('tags') as string || '').split(',').map(t => t.trim()).filter(Boolean);
     const published = formData.get('published') === 'on';
     
-    if (!title || !holiday || !date || !description) {
+    if (!title.trim() || !holiday.trim() || !date.trim() || !description.trim()) {
       setMessage('Title, Holiday, Date, and Description are required');
       return;
     }
@@ -83,6 +83,20 @@ export default function WriteHomeKitchen({ slug: initialSlug }: { slug?: string 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
+    
+    // Check file types (support HEIC/HEIF formats)
+    const invalidFiles = files.filter(file => {
+      const isValidImageType = file.type.startsWith('image/') || 
+                               file.name.toLowerCase().endsWith('.heic') || 
+                               file.name.toLowerCase().endsWith('.heif');
+      return !isValidImageType;
+    });
+    
+    if (invalidFiles.length > 0) {
+      alert('Please choose image files only.');
+      e.target.value = '';
+      return;
+    }
     
     if (!slug) {
       alert('Please set a title first to generate a slug');
@@ -214,7 +228,7 @@ export default function WriteHomeKitchen({ slug: initialSlug }: { slug?: string 
               </label>
               <input 
                 type="file" 
-                accept="image/*" 
+                accept="image/*,image/heic,image/heif,.heic,.heif" 
                 multiple
                 onChange={handleImageUpload}
                 className="w-full border border-neutral-300 rounded-lg px-4 py-2"
