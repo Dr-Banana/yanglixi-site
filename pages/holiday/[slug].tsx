@@ -264,11 +264,11 @@ export default function HolidayPage({ holiday, posts, isAdmin }: HolidayPageProp
 
                   {/* Post Content */}
                   <div className="p-6">
-                    <div className="text-neutral-700 leading-relaxed prose prose-sm max-w-none">
+                    <div className="prose prose-sm prose-neutral max-w-none">
                       {post.descriptionMdx ? (
                         <MDXRemote {...post.descriptionMdx} />
                       ) : (
-                        <p className="whitespace-pre-wrap">{post.description}</p>
+                        <div className="whitespace-pre-wrap text-neutral-700">{post.description}</div>
                       )}
                     </div>
 
@@ -356,7 +356,40 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
     posts.map(async (post) => {
       if (post.description) {
         try {
-          const descriptionMdx = await serialize(post.description);
+          // Normalize line breaks for MDX rendering
+          // MDX requires double newlines for paragraph breaks
+          // Convert all single newlines between non-empty lines to double newlines
+          let normalizedDescription = post.description
+            .replace(/\r\n/g, '\n') // Normalize Windows line endings
+            .replace(/\r/g, '\n')   // Normalize Mac line endings
+            .split('\n')
+            .map((line, index, array) => {
+              const trimmedLine = line.trim();
+              const prevLine = index > 0 ? array[index - 1]?.trim() : '';
+              
+              // Empty lines stay as empty (will become paragraph break)
+              if (trimmedLine === '') {
+                return '';
+              }
+              
+              // If previous line had content, add double newline before current line
+              if (index > 0 && prevLine !== '') {
+                return '\n\n' + line;
+              }
+              
+              return line;
+            })
+            .join('\n')
+            .replace(/\n{3,}/g, '\n\n'); // Clean up excessive newlines (3+ becomes 2)
+          
+          const descriptionMdx = await serialize(normalizedDescription, {
+            mdxOptions: {
+              remarkPlugins: [],
+              rehypePlugins: [],
+              format: 'mdx',
+            },
+            parseFrontmatter: false,
+          });
           return { ...post, descriptionMdx };
         } catch (error) {
           console.error('Error serializing description for post:', post.slug, error);

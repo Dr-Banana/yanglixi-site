@@ -42,36 +42,47 @@ export default function MarkdownPreviewEditor({
 
   // 简单的 HTML 转 Markdown 逻辑
   const htmlToMarkdown = (html: string): string => {
+    // 先处理块级元素，它们需要双换行
     let md = html
       .replace(/<strong.*?>(.*?)<\/strong>/g, '**$1**')
       .replace(/<b.*?>(.*?)<\/b>/g, '**$1**')
       .replace(/<em.*?>(.*?)<\/em>/g, '*$1*')
       .replace(/<i.*?>(.*?)<\/i>/g, '*$1*')
       .replace(/<a.*?href="(.*?)".*?>(.*?)<\/a>/g, '[$2]($1)')
-      .replace(/<h1.*?>(.*?)<\/h1>/g, '# $1\n')
-      .replace(/<h2.*?>(.*?)<\/h2>/g, '## $1\n')
-      .replace(/<h3.*?>(.*?)<\/h3>/g, '### $1\n')
+      .replace(/<h1.*?>(.*?)<\/h1>/g, '\n\n# $1\n\n')
+      .replace(/<h2.*?>(.*?)<\/h2>/g, '\n\n## $1\n\n')
+      .replace(/<h3.*?>(.*?)<\/h3>/g, '\n\n### $1\n\n')
       .replace(/<ul.*?>([\s\S]*?)<\/ul>/g, (match, p1) => {
-        return p1.replace(/<li.*?>(.*?)<\/li>/g, '- $1\n');
+        return '\n\n' + p1.replace(/<li.*?>(.*?)<\/li>/g, '- $1\n') + '\n';
       })
       .replace(/<ol.*?>([\s\S]*?)<\/ol>/g, (match, p1) => {
         let i = 1;
-        return p1.replace(/<li>(.*?)<\/li>/g, () => `${i++}. $1\n`);
+        return '\n\n' + p1.replace(/<li>(.*?)<\/li>/g, () => `${i++}. $1\n`) + '\n';
       })
-      .replace(/<blockquote.*?>(.*?)<\/blockquote>/g, '> $1\n')
-      .replace(/<br\s*\/?>/g, '\n')
-      .replace(/<div.*?>(.*?)<\/div>/g, '\n$1')
-      .replace(/<p.*?>(.*?)<\/p>/g, '\n$1\n');
+      .replace(/<blockquote.*?>(.*?)<\/blockquote>/g, '\n\n> $1\n\n');
+    
+    // 处理段落和 div：它们表示段落分隔，需要双换行
+    md = md.replace(/<p.*?>(.*?)<\/p>/g, '\n\n$1\n\n');
+    md = md.replace(/<div.*?>(.*?)<\/div>/g, '\n\n$1\n\n');
+    
+    // 处理换行：单个 <br> 转换为单换行（remark-breaks 会处理它）
+    // 多个连续的 <br> 转换为双换行（段落分隔）
+    md = md.replace(/(<br\s*\/?>){2,}/g, '\n\n');
+    md = md.replace(/<br\s*\/?>/g, '\n');
     
     // 移除剩余 HTML 标签
     md = md.replace(/<[^>]*>/g, '');
+    
+    // 清理多余的空行：将3个或更多连续换行替换为2个
+    md = md.replace(/\n{3,}/g, '\n\n');
     
     // 解码 HTML 实体
     if (typeof document !== 'undefined') {
       const txt = document.createElement('textarea');
       txt.innerHTML = md;
-      return txt.value.trim();
+      md = txt.value;
     }
+    
     return md.trim();
   };
 
