@@ -35,7 +35,13 @@ export default function FormFields({ initial, errors, displaySlug, config }: For
               <input
                 name="date"
                 type="date"
-                defaultValue={initial?.date?.slice(0, 10) || new Date().toISOString().slice(0, 10)}
+                defaultValue={initial?.date?.slice(0, 10) || (() => {
+                  const now = new Date();
+                  const year = now.getFullYear();
+                  const month = String(now.getMonth() + 1).padStart(2, '0');
+                  const day = String(now.getDate()).padStart(2, '0');
+                  return `${year}-${month}-${day}`;
+                })()}
                 className={`w-full border rounded px-3 py-2 ${errors.date ? 'border-red-500' : ''}`}
               />
             </div>

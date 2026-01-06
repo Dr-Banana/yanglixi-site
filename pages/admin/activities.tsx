@@ -40,7 +40,7 @@ export default function ActivitiesPage({ activities: initialActivities, isAdmin 
       image: '',
       location: null,
       link: null,
-      date: new Date().toISOString(),
+      date: new Date(new Date().setHours(12, 0, 0, 0)).toISOString(),
       order: 0,  // Order is no longer used for sorting
       published: false,
     };
@@ -58,31 +58,28 @@ export default function ActivitiesPage({ activities: initialActivities, isAdmin 
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Check file type (support HEIC/HEIF formats)
+    // Check file type
     if (!isValidImageFile(file)) {
-      alert('Please choose an image file.');
+      alert('Please choose a valid image file (JPEG, PNG, WebP).');
       e.target.value = '';
       return;
     }
 
     try {
-      // Process HEIC if needed
+      // Get file preview
       const processedFile = await convertHeicToJpeg(file);
       const dataUrl = await fileToDataUrl(processedFile);
       
-      // 强制确保是 JPEG 类型头
-      const jpegDataUrl = dataUrl.replace(/^data:.*;base64,/, 'data:image/jpeg;base64,');
-      
       // Preview
-      setImagePreview(jpegDataUrl);
+      setImagePreview(dataUrl);
 
       const response = await fetch('/api/admin/activities/image', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           activityId: editing?.id,
-          image: jpegDataUrl,
-          contentType: 'image/jpeg',
+          image: dataUrl,
+          contentType: file.type,
         }),
       });
 
@@ -190,8 +187,8 @@ export default function ActivitiesPage({ activities: initialActivities, isAdmin 
                   <label className="block text-sm font-medium mb-1">Date</label>
                   <input
                     type="date"
-                    value={editing.date ? new Date(editing.date).toISOString().split('T')[0] : ''}
-                    onChange={(e) => setEditing({ ...editing, date: new Date(e.target.value).toISOString() })}
+                    value={editing.date ? editing.date.split('T')[0] : ''}
+                    onChange={(e) => setEditing({ ...editing, date: new Date(e.target.value + 'T12:00:00').toISOString() })}
                     className="w-full border rounded px-3 py-2"
                   />
                   <p className="text-xs text-gray-500 mt-1">

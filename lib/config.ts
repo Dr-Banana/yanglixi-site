@@ -6,25 +6,23 @@
  * Accepted image file formats for upload
  * This is used across all post types (Recipe, Blog, Home Kitchen, Activity)
  */
-export const ACCEPTED_IMAGE_FORMATS = 'image/*,image/heic,image/heif,.heic,.heif';
+export const ACCEPTED_IMAGE_FORMATS = 'image/jpeg,image/png,image/gif,image/webp';
 
 /**
  * Valid image file extensions
  */
-export const VALID_IMAGE_EXTENSIONS = ['.heic', '.heif'];
+export const VALID_IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
 
 /**
  * Check if a file is a valid image type
- * Supports HEIC/HEIF formats through file extension check
  */
 export function isValidImageFile(file: File): boolean {
-  // Check MIME type
-  if (file.type.startsWith('image/')) {
-    return true;
-  }
-  
-  // Check file extension for HEIC/HEIF (some browsers may not recognize MIME type)
-  const fileName = file.name.toLowerCase();
-  return VALID_IMAGE_EXTENSIONS.some(ext => fileName.endsWith(ext));
+  const type = file.type.toLowerCase();
+  return (
+    type === 'image/jpeg' || 
+    type === 'image/png' || 
+    type === 'image/gif' || 
+    type === 'image/webp'
+  );
 }
 

@@ -47,7 +47,7 @@ export default function WriteRecipePage({ initial }: WriteRecipeProps) {
     const payload = {
       slug: displaySlug || undefined,
       title: String(form.get('title') || ''),
-      date: String(form.get('date') || ''),
+      date: form.get('date') ? new Date(String(form.get('date')) + 'T12:00:00').toISOString() : '',
       excerpt: String(form.get('excerpt') || ''),
       cookTime: String(form.get('cookTime') || ''),
       difficulty: String(form.get('difficulty') || ''),
@@ -137,9 +137,9 @@ export default function WriteRecipePage({ initial }: WriteRecipeProps) {
       return;
     }
     
-    // Check file type (support HEIC/HEIF formats)
+    // Check file type
     if (!isValidImageFile(file)) {
-      alert('Please choose an image file.');
+      alert('Please choose a valid image file (JPEG, PNG, WebP).');
       e.target.value = '';
       return;
     }
@@ -156,10 +156,11 @@ export default function WriteRecipePage({ initial }: WriteRecipeProps) {
       const processedFile = await convertHeicToJpeg(file);
       const dataUrl = await fileToDataUrl(processedFile);
       
-      // 强制确保是 JPEG
-      const jpegDataUrl = dataUrl.replace(/^data:.*;base64,/, 'data:image/jpeg;base64,');
-      
-      const res = await fetch('/api/admin/recipes/cover', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ slug: currentSlug, dataUrl: jpegDataUrl }) });
+      const res = await fetch('/api/admin/recipes/cover', { 
+        method: 'POST', 
+        headers: { 'Content-Type': 'application/json' }, 
+        body: JSON.stringify({ slug: currentSlug, dataUrl: dataUrl }) 
+      });
       if (res.ok) {
         const data = await res.json();
         if (data.url) {

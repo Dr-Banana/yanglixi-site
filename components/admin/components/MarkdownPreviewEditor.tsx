@@ -10,6 +10,7 @@ interface MarkdownPreviewEditorProps {
   placeholder?: string;
   className?: string;
   required?: boolean;
+  topOffset?: string;
 }
 
 export default function MarkdownPreviewEditor({
@@ -21,6 +22,7 @@ export default function MarkdownPreviewEditor({
   placeholder,
   className = '',
   required = false,
+  topOffset = '0',
 }: MarkdownPreviewEditorProps) {
   const editorRef = useRef<HTMLDivElement>(null);
   const isInternalChange = useRef(false);
@@ -132,13 +134,14 @@ export default function MarkdownPreviewEditor({
           {label} {required && typeof label === 'string' && !label.includes('*') && <span className="text-red-500">*</span>}
         </label>
       )}
-      <div className="border border-neutral-300 rounded-lg overflow-hidden flex flex-col bg-white">
+      <div className="border border-neutral-300 rounded-lg flex flex-col bg-white overflow-visible">
         <MarkdownToolbar 
           textareaId={id} 
           value={value} 
           onChange={onChange}
           isVisual={true}
           onCommand={handleToolbarCommand}
+          topOffset={topOffset}
         />
         
         <div

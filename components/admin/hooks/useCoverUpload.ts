@@ -30,9 +30,9 @@ export function useCoverUpload({
       return;
     }
 
-    // Check file type (support HEIC/HEIF formats)
+    // Check file type
     if (!isValidImageFile(file)) {
-      alert('Please choose an image file.');
+      alert('Please choose a valid image file (JPEG, PNG, WebP).');
       e.target.value = '';
       return;
     }
@@ -48,13 +48,10 @@ export function useCoverUpload({
       const processedFile = await convertHeicToJpeg(file);
       const dataUrl = await fileToDataUrl(processedFile);
       
-      // 强制确保是 JPEG
-      const jpegDataUrl = dataUrl.replace(/^data:.*;base64,/, 'data:image/jpeg;base64,');
-      
       const res = await fetch(coverApiEndpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ slug, dataUrl: jpegDataUrl }),
+        body: JSON.stringify({ slug, dataUrl: dataUrl }),
       });
       if (res.ok) {
         const data = await res.json();

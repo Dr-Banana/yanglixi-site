@@ -6,6 +6,7 @@ interface MarkdownToolbarProps {
   onChange: (value: string) => void;
   isVisual?: boolean;
   onCommand?: (command: string, value?: string) => void;
+  topOffset?: string;
 }
 
 export default function MarkdownToolbar({ 
@@ -13,7 +14,8 @@ export default function MarkdownToolbar({
   value, 
   onChange, 
   isVisual = false,
-  onCommand 
+  onCommand,
+  topOffset = '0'
 }: MarkdownToolbarProps) {
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
@@ -81,7 +83,10 @@ export default function MarkdownToolbar({
   const insertHorizontalRule = () => handleAction('insertHorizontalRule', '\n---\n', '', '');
 
   return (
-    <div className="border-b border-neutral-200 bg-neutral-50 px-2 py-1.5 flex flex-wrap items-center gap-1">
+    <div 
+      className="sticky z-10 border-b border-neutral-200 bg-neutral-50 px-2 py-1.5 flex flex-wrap items-center gap-1 shadow-sm transition-all rounded-t-lg"
+      style={{ top: topOffset }}
+    >
       {/* Bold */}
       <button
         type="button"

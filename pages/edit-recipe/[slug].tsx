@@ -188,9 +188,9 @@ export default function EditRecipePage({ initial }: EditRecipeProps) {
       return;
     }
     
-    // Check file type (support HEIC/HEIF formats)
+    // Check file type
     if (!isValidImageFile(file)) {
-      alert('Please choose an image file.');
+      alert('Please choose a valid image file (JPEG, PNG, WebP).');
       e.target.value = '';
       return;
     }
@@ -207,10 +207,11 @@ export default function EditRecipePage({ initial }: EditRecipeProps) {
       const processedFile = await convertHeicToJpeg(file);
       const dataUrl = await fileToDataUrl(processedFile);
       
-      // 强制确保是 JPEG
-      const jpegDataUrl = dataUrl.replace(/^data:.*;base64,/, 'data:image/jpeg;base64,');
-      
-      const res = await fetch('/api/admin/recipes/cover', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ slug: currentSlug, dataUrl: jpegDataUrl }) });
+      const res = await fetch('/api/admin/recipes/cover', { 
+        method: 'POST', 
+        headers: { 'Content-Type': 'application/json' }, 
+        body: JSON.stringify({ slug: currentSlug, dataUrl: dataUrl }) 
+      });
       if (res.ok) {
         const data = await res.json();
         if (data.url) {
@@ -452,6 +453,7 @@ export default function EditRecipePage({ initial }: EditRecipeProps) {
               label="Introduction"
               rows={4}
               placeholder="Describe the recipe, its origin, or why you love it... (optional)"
+              topOffset="80px"
             />
 
             {/* Ingredients */}
@@ -463,6 +465,7 @@ export default function EditRecipePage({ initial }: EditRecipeProps) {
                 label="Ingredients"
                 rows={10}
                 placeholder="- 2 cups flour&#10;- 1 cup sugar&#10;- 3 eggs&#10;... (optional)"
+                topOffset="80px"
               />
               <p className="text-xs text-neutral-500 mt-1">Use bullet points (- ) or numbered lists (1. ) for ingredients</p>
             </div>
@@ -476,6 +479,7 @@ export default function EditRecipePage({ initial }: EditRecipeProps) {
                 label="Instructions"
                 rows={12}
                 placeholder="1. Preheat oven to 350°F&#10;2. Mix dry ingredients...&#10;3. Bake for 30 minutes... (optional)"
+                topOffset="80px"
               />
               <p className="text-xs text-neutral-500 mt-1">Number each step clearly (1. 2. 3. ...)</p>
             </div>
@@ -488,6 +492,7 @@ export default function EditRecipePage({ initial }: EditRecipeProps) {
               label="Storage"
               rows={3}
               placeholder="Store in an airtight container for up to 3 days... (optional)"
+              topOffset="80px"
             />
 
             {/* Serving Suggestions */}
@@ -498,6 +503,7 @@ export default function EditRecipePage({ initial }: EditRecipeProps) {
               label="Serving Suggestions"
               rows={3}
               placeholder="Serve warm with ice cream, or enjoy with coffee... (optional)"
+              topOffset="80px"
             />
 
             {/* Preview */}

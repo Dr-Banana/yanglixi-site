@@ -34,11 +34,11 @@ export default function BatchImageUpload({
     const fileArray = Array.from(files);
     if (fileArray.length === 0) return;
 
-    // Check file types (support HEIC/HEIF formats)
+    // Check file types
     const invalidFiles = fileArray.filter(file => !isValidImageFile(file));
     
     if (invalidFiles.length > 0) {
-      alert('Please choose image files only.');
+      alert('Please choose valid image files (JPEG, PNG, WebP, GIF).');
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
@@ -59,10 +59,10 @@ export default function BatchImageUpload({
         const fileIndex = uploadedImages.length + i;
         
         try {
-          // Update progress: converting
+          // Update progress: processing
           setUploadProgress(prev => ({ ...prev, [fileIndex]: 10 }));
           
-          // 1. 转换 HEIC 到 JPEG (如果是 HEIC 的话)
+          // 1. 获取文件预览
           const processedFile = await convertHeicToJpeg(file);
           
           setUploadProgress(prev => ({ ...prev, [fileIndex]: 30 }));
@@ -72,11 +72,11 @@ export default function BatchImageUpload({
           
           setUploadProgress(prev => ({ ...prev, [fileIndex]: 50 }));
           
-          // 3. 核心修复：强制修改 Data URL 的 MIME 类型头为 image/jpeg
-          const jpegDataUrl = dataUrl.replace(/^data:.*;base64,/, 'data:image/jpeg;base64,');
+          // 3. 规范化 Data URL 的 MIME 类型头
+          const finalDataUrl = dataUrl; // 不需要强制修改，因为我们现在只接受标准格式
           
           // Add preview immediately
-          onPreviewsChange([...imagePreviews, jpegDataUrl]);
+          onPreviewsChange([...imagePreviews, finalDataUrl]);
           
           setUploadProgress(prev => ({ ...prev, [fileIndex]: 70 }));
           
@@ -87,7 +87,7 @@ export default function BatchImageUpload({
             body: JSON.stringify({ 
               slug, 
               imageIndex: fileIndex,
-              dataUrl: jpegDataUrl
+              dataUrl: finalDataUrl
             }),
           });
           
@@ -211,7 +211,7 @@ export default function BatchImageUpload({
               {uploading ? 'Uploading...' : 'Click to upload or drag and drop'}
             </p>
             <p className="text-xs text-neutral-500 mt-1">
-              {uploading ? 'Please wait while images are being processed' : 'Supports HEIC, JPEG, PNG (multiple files allowed)'}
+              {uploading ? 'Please wait while images are being processed' : 'Supports JPEG, PNG, WebP (multiple files allowed)'}
             </p>
           </div>
         </label>

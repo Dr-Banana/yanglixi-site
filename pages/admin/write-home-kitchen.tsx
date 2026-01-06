@@ -100,7 +100,7 @@ export default function WriteHomeKitchen({ slug: initialSlug }: { slug?: string 
       description,
       location: location || null,
       images: uploadedImages,
-      date: new Date(date).toISOString(),
+      date: new Date(date + 'T12:00:00').toISOString(),
       tags: tags.length > 0 ? tags : null,
       published,
     };
@@ -189,7 +189,13 @@ export default function WriteHomeKitchen({ slug: initialSlug }: { slug?: string 
                   type="date"
                   name="date" 
                   required
-                  defaultValue={new Date().toISOString().split('T')[0]}
+                  defaultValue={(() => {
+                    const now = new Date();
+                    const year = now.getFullYear();
+                    const month = String(now.getMonth() + 1).padStart(2, '0');
+                    const day = String(now.getDate()).padStart(2, '0');
+                    return `${year}-${month}-${day}`;
+                  })()}
                   className="w-full border border-neutral-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary-500 focus:border-transparent" 
                 />
               </div>
